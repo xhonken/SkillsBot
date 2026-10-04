@@ -1,0 +1,36 @@
+{
+  "name": "skillsbot",
+  "version": "0.7.0",
+  "description": "A modular Discord bot with configurable AI and 3D printer skills",
+  "main": "src/bot.js",
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/bot.js",
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "check": "node --env-file-if-exists=.env scripts/check-config.mjs",
+    "printer:add": "node scripts/printer-add.mjs",
+    "printer:refresh": "node scripts/printer-refresh.mjs",
+    "format": "prettier --write 'src/**/*.js' 'scripts/*.mjs' 'tests/*.mjs' '*.example.json' package.json README.md 'docs/*.md' 'howto/*.md' '.github/**/*.yml'",
+    "format:check": "prettier --check 'src/**/*.js' 'scripts/*.mjs' 'tests/*.mjs' '*.example.json' package.json README.md 'docs/*.md' 'howto/*.md' '.github/**/*.yml'",
+    "setup": "node scripts/setup.mjs",
+    "service:generate": "node scripts/service-generate.mjs"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "mqtt": "^5.6.0",
+    "pngjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.9"
+  },
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xhonken/SkillsBot.git"
+  }
+}

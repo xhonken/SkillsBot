@@ -1,0 +1,27 @@
+{
+  "active": null,
+  "profiles": {
+    "local": {
+      "provider": "openai-compatible",
+      "baseUrl": "http://your-ai-server:11434/v1",
+      "model": "gpt-oss:20b",
+      "apiKeyEnv": null,
+      "maxOutputTokens": 4096
+    },
+    "openai": {
+      "provider": "openai",
+      "model": "REPLACE_WITH_OPENAI_MODEL_ID",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "maxOutputTokens": 4096
+    },
+    "claude": {
+      "provider": "anthropic",
+      "model": "REPLACE_WITH_CLAUDE_MODEL_ID",
+      "apiKeyEnv": "ANTHROPIC_API_KEY",
+      "maxOutputTokens": 4096
+    }
+  },
+  "timeoutMs": 180000,
+  "maxConcurrent": 2,
+  "cooldownMs": 5000
+}

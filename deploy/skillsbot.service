@@ -1,0 +1,32 @@
+[Unit]
+Description=SkillsBot Discord bot
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@WORKDIR@
+Environment=NODE_ENV=production
+EnvironmentFile=@ENV@
+ExecCondition=@NODE@ @READY@
+ExecStart=@NODE@ @BOT@
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=20
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=@ROOT@
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,57 @@
+{
+  "printers": {
+    "bambu1": {
+      "brand": "bambulab",
+      "protocol": "bambu",
+      "host": "bambu-printer.invalid",
+      "deviceId": "REPLACE_WITH_SERIAL",
+      "passwordEnv": "BAMBU1_ACCESS_CODE",
+      "tls": {
+        "rejectUnauthorized": true,
+        "caFile": "certs/bambu-printer-ca.crt",
+        "servername": "REPLACE_WITH_SERIAL"
+      }
+    },
+    "voron1": {
+      "brand": "voron",
+      "protocol": "moonraker",
+      "url": "http://voron-printer.invalid:7125"
+    },
+    "prusa1": {
+      "brand": "prusa",
+      "protocol": "prusalink",
+      "url": "http://prusa-printer.invalid",
+      "apiKeyEnv": "PRUSA1_API_KEY"
+    },
+    "creality1": {
+      "brand": "creality",
+      "protocol": "moonraker",
+      "url": "http://creality-printer.invalid:7125"
+    },
+    "anycubic1": {
+      "brand": "anycubic",
+      "protocol": "octoprint",
+      "url": "http://anycubic-octoprint.invalid",
+      "apiKeyEnv": "ANYCUBIC1_API_KEY"
+    },
+    "elegoo1": {
+      "brand": "elegoo",
+      "protocol": "moonraker",
+      "url": "http://elegoo-printer.invalid:7125"
+    },
+    "sovol1": {
+      "brand": "sovol",
+      "protocol": "moonraker",
+      "url": "http://sovol-printer.invalid:7125"
+    },
+    "qidi1": {
+      "brand": "qidi",
+      "protocol": "moonraker",
+      "url": "http://qidi-printer.invalid:7125"
+    }
+  },
+  "groups": {
+    "farm": ["bambu1", "voron1", "prusa1"],
+    "klipper": ["voron1", "creality1", "elegoo1", "sovol1", "qidi1"]
+  }
+}
