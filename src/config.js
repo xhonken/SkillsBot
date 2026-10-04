@@ -1,5 +1,4 @@
-import { readFile, writeFile, rename, rm } from "node:fs/promises";
-import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseEnv } from "node:util";
@@ -280,24 +279,5 @@ export async function readPrinterEnv(
     throw new Error(
       "Printer credentials could not be read from the .env file.",
     );
-  }
-}
-
-export async function saveEnabledSkills(
-  skills,
-  path = process.env.BOT_CONFIG || resolve(ROOT, "config.json"),
-) {
-  const current = await readJson(path);
-  const next = { ...current, skills };
-  validateBotConfig(next);
-  const temporary = `${path}.${randomUUID()}.tmp`;
-  try {
-    await writeFile(temporary, `${JSON.stringify(next, null, 2)}\n`, {
-      mode: 0o600,
-      flag: "wx",
-    });
-    await rename(temporary, path);
-  } finally {
-    await rm(temporary, { force: true });
   }
 }

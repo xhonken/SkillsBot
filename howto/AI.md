@@ -65,17 +65,19 @@ Only the chosen provider's key is needed. Keep `DISCORD_TOKEN` and printer crede
 npm run check
 ```
 
-An owner can enable or disable the skill in Discord:
+The AI skill is disabled by default. Stop the bot and manually add `"ai"` to the existing `skills` list in private `config.json`. For example, `"skills": ["ai"]` enables AI only; preserve other skill names you want enabled. Selecting an AI profile in `ai.json` does not enable the skill.
+
+Restart the bot, then use these commands in Discord:
 
 ```text
-!skill add ai
 !ai info
 !ai q Förklara hur en 3D-skrivare fungerar.
 !ai help
-!skill remove ai
 ```
 
-`!ai info` shows the selected profile and model; it does not contact the server or claim that the model is loaded. `!ai q` sends a waiting message, then the answer in labelled code blocks. Long answers split into multiple messages. The request is cancelled when the skill is disabled.
+To disable AI, stop the bot, remove `"ai"` from the `skills` list, and restart. Shutdown cancels outstanding requests.
+
+`!ai info` shows the selected profile and model; it does not contact the server or claim that the model is loaded. `!ai q` sends a waiting message, then the answer in labelled code blocks. Long answers split into multiple messages.
 
 Each question is independent. The bot sends that question and its configured `systemPrompt`, without conversation history, other channel messages or printer configuration. API-provider handling of submitted text remains subject to that provider's terms.
 

@@ -57,13 +57,13 @@ Keep registration side effects inside `register`, rather than module initializat
 
 ## Command help
 
-The main bot owns `!help`, `!info`, `!skills`, and `!skill`; skills must not register their own handlers for these commands. Add a `commands` array to the exported object so the main bot can include the loaded skill in `!help`. Each entry requires a one-line `command` (starting with `!`, at most 160 characters, without backticks or mentions) and a one-line `description` (at most 350 characters). Invalid metadata is rejected before registration.
+The main bot owns `!help`, `!info`, and `!skills`; skills must not register their own handlers for these commands. The legacy `skill` namespace also remains reserved. Add a `commands` array to the exported object so the main bot can include the loaded skill in `!help`. Each entry requires a one-line `command` (starting with `!`, at most 160 characters, without backticks or mentions) and a one-line `description` (at most 350 characters). Invalid metadata is rejected before registration.
 
 Optional `permission: "hello.greet"` identifies the configuration permission key used by the handler; `ownerOnly: true` marks an owner-only command. These fields annotate help and do not enforce access themselves: the handler must check the same permission or ownership rule. Unknown permission keys are owner-only by default; configure `"hello.greet": []` under `permissions` to allow everyone, or provide allowed Discord IDs. Printer read-only commands and help are public by default.
 
-The core automatically handles `!<namespace>`, `!<namespace> help`, and `!help <namespace>` for active skills, checking both `permissions.help` and any `<namespace>.help` restriction. Do not implement a second help handler. Skills without `commands` remain loadable and show a missing-help message. Only loaded skills contribute help, and the list updates immediately after activation or removal. Never include credentials or private configuration in help metadata.
+The core automatically handles `!<namespace>`, `!<namespace> help`, and `!help <namespace>` for active skills, checking both `permissions.help` and any `<namespace>.help` restriction. Do not implement a second help handler. Skills without `commands` remain loadable and show a missing-help message. Only loaded skills contribute help, according to the selection loaded at startup. Never include credentials or private configuration in help metadata.
 
-An owner activates this module with `!skill add hello` and disables it with `!skill remove hello`. The selection is written to `config.json`; `!info` reflects the active registry. Modules are available without being loaded automatically. Disabling all modules preserves the main bot commands. Restart after changing module source because Node caches imports.
+All skills are disabled by default. To activate this module, stop the bot, manually add `"hello"` to the existing `skills` array in `config.json`, and restart. Remove its name and restart to disable it. The bot reads this selection at startup and never changes it through Discord. `!skills` lists available modules without importing inactive ones; `!info` reflects the active registry. An empty list preserves the main bot commands. Restart after changing module source because Node caches imports.
 
 ## Reply formatting
 

@@ -1,5 +1,7 @@
 # Add and Remove Printers
 
+The printer skill is disabled by default. Stop the bot, add `"3dprinter"` to the existing `skills` list in private `config.json`, and restart. For example, `"skills": ["3dprinter"]` enables printers only. Preserve any other skill names you want enabled. Adding a printer does not enable the skill.
+
 Open a terminal in the project folder as the bot user:
 
 ```bash

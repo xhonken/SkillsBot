@@ -1,6 +1,6 @@
 # SkillsBot
 
-A Discord bot with an owner-controlled skill system. Enable only the modules you want:
+A Discord bot with a configurable skill system. All skills are disabled by default; enable the modules you want manually in `config.json`:
 
 - **3D printers:** progress, time remaining, errors, groups, and multi-unit Bambu AMS information.
 - **AI:** local OpenAI-compatible models, OpenAI, or Claude with your own credentials.
@@ -24,9 +24,21 @@ npm run check
 npm start
 ```
 
-Setup asks for your bot token (hidden input), owner IDs, allowed channels, and selected skills. It creates private files with an **empty printer list** and **no active AI model**.
+Setup asks for your bot token (hidden input), owner IDs, and allowed channels. It creates private files with **no enabled skills**, an **empty printer list**, and **no active AI model**.
 
 Wait for `Logged in as …`, then type `!help` and `!info` in a server text channel. Keep the terminal open; **Ctrl+C** stops the bot. See [Linux automatic startup](docs/DEPLOYMENT.md) to run after reboot.
+
+## Enable or Disable Skills
+
+Stop the bot, open private `config.json`, and edit its existing `skills` list:
+
+```json
+"skills": []
+```
+
+An empty list disables every skill. Use `["3dprinter"]` for printers, `["ai"]` for AI, or `["3dprinter", "ai"]` for both. Save, run `npm run check`, and restart the bot. Remove a name from the list to disable that skill.
+
+`!skills` lists available modules and their current status; `!info` confirms the loaded selection. Activation and removal require manual configuration and a restart. Adding device settings, selecting an AI model, or placing a module in `src/skills/` does not enable it.
 
 ## Commands
 
@@ -35,7 +47,6 @@ Wait for `Logged in as …`, then type `!help` and `!info` in a server text chan
 | `!help`                              | List main-bot and currently loaded skill commands.           |
 | `!info`                              | Show version and active skills; owners only.                 |
 | `!skills`                            | List available and active modules; owners only.              |
-| `!skill add ai` / `!skill remove ai` | Enable or disable a local module; owners only.               |
 | `!3d status <printer\|group\|all>`   | Show progress, time remaining, and errors.                   |
 | `!3d ams <printer\|group\|all>`      | Show AMS slots, filament, colors, and estimated amount left. |
 | `!3d printers [printer\|group\|all]` | List configured printers and groups.                         |
@@ -69,7 +80,7 @@ For AI, edit private `ai.json` and select a profile with `active`. A local compa
 
 These files, `.backups/`, and generated service files are ignored by Git. Public examples contain placeholders only. Review staged files before committing; never force-add private files.
 
-Run `npm run setup` again **with the bot stopped** to change core settings. Enter keeps existing values; `none` at the skill prompt loads no skills. Printer and AI settings reload on their next command; owner/channel/permission changes require a restart. Restrict commands with user-ID arrays under `permissions`, such as `"ai.q": ["YOUR_USER_ID"]`. An empty array permits everyone; owners bypass these lists.
+Run `npm run setup` again **with the bot stopped** to change core settings. Enter keeps existing values; setup preserves the manually configured skill selection. Printer and AI settings reload on their next command; owner/channel/permission/skill changes require a restart. Restrict commands with user-ID arrays under `permissions`, such as `"ai.q": ["YOUR_USER_ID"]`. An empty array permits everyone; owners bypass these lists.
 
 If the bot is online but silent, check Message Content Intent, channel permissions, and configured channel IDs. `npm run check` diagnoses configuration errors; [Getting started](docs/GETTING_STARTED.md#troubleshooting) covers first-run problems.
 

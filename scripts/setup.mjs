@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { parseArgs, parseEnv } from "node:util";
 import { pathToFileURL } from "node:url";
 import { ROOT, validateBotConfig } from "../src/config.js";
-import { discoverSkills } from "../src/skill-manager.js";
 import { ask, PromptError } from "../src/terminal.js";
 
 export class SetupError extends Error {}
@@ -13,7 +12,7 @@ export async function initializeFiles(root = ROOT) {
   const examples = {
     "config.json":
       JSON.stringify(
-        { owners: [], channelIds: [], skills: ["3dprinter"], permissions: {} },
+        { owners: [], channelIds: [], skills: [], permissions: {} },
         null,
         2,
       ) + "\n",
@@ -68,7 +67,7 @@ async function atomicWrite(path, content) {
 
 export async function setupBot(
   root = ROOT,
-  { prompt = ask, log = console.log, available = discoverSkills } = {},
+  { prompt = ask, log = console.log } = {},
 ) {
   await initializeFiles(root);
   const configPath = join(root, "config.json");
@@ -113,22 +112,7 @@ export async function setupBot(
       : channelsAnswer
         ? discordIDs(channelsAnswer, "Channels")
         : previous.channelIds;
-  const modules = await available();
-  log("Available skills: " + [...modules.keys()].join(", "));
-  const skillAnswer = await prompt(
-    "Skills, comma separated [" +
-      (previous.skills.join(", ") || "none") +
-      "]: ",
-  );
-  const skills =
-    skillAnswer.toLowerCase() === "none"
-      ? []
-      : skillAnswer
-        ? [...new Set(skillAnswer.split(/[,\s]+/).filter(Boolean))]
-        : previous.skills;
-  if (skills.some((name) => !modules.has(name)))
-    throw new SetupError("Choose listed skill names, or none.");
-  const next = { ...config, owners, channelIds, skills };
+  const next = { ...config, owners, channelIds, skills: previous.skills };
   validateBotConfig(next);
   const lockPath = join(root, ".setup.lock");
   let lock;
@@ -171,6 +155,9 @@ export async function setupBot(
     await rm(lockPath, { force: true });
   }
   log("Saved private settings. No printer or AI configuration was replaced.");
+  log(
+    "Enable skills manually in config.json, then restart the bot. See docs/GETTING_STARTED.md.",
+  );
   log("Next: npm run check, then npm start. Try !help and !info in Discord.");
   return next;
 }
@@ -184,7 +171,7 @@ async function main() {
   });
   if (values.help) {
     console.log(
-      "npm run setup — configure token, owners, channels and skills.\n" +
+      "npm run setup — configure token, owners and channels; preserve skill selection.\n" +
         "npm run setup -- --init — create missing private files only; no prompts.\n" +
         "Stop the bot before reconfiguring. Existing files are preserved by --init.",
     );

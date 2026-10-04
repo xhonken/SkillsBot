@@ -1,6 +1,5 @@
 import { readdir } from "node:fs/promises";
 import { extname, basename } from "node:path";
-import { saveEnabledSkills } from "./config.js";
 import { acceptsMessage, isOwner } from "./permissions.js";
 import { codeBox, fields, reply, table } from "./messages.js";
 import {
@@ -50,40 +49,25 @@ export class SkillManager {
   constructor(
     client,
     config,
-    {
-      discover = discoverSkills,
-      load = (url) => import(url),
-      save = saveEnabledSkills,
-    } = {},
+    { discover = discoverSkills, load = (url) => import(url) } = {},
   ) {
     this.client = client;
     this.config = config;
     this.discover = discover;
     this.load = load;
-    this.save = save;
     this.cleanup = new Map();
-    this.queue = Promise.resolve();
   }
 
   async start() {
     try {
-      for (const name of this.config.skills) await this.activate(name, false);
+      for (const name of this.config.skills) await this.activate(name);
     } catch (error) {
       await this.stop();
       throw error;
     }
   }
 
-  change(action, name) {
-    // Serialize changes so simultaneous owners cannot lose each other's edits.
-    const task = this.queue.then(() =>
-      action === "add" ? this.activate(name, true) : this.deactivate(name),
-    );
-    this.queue = task.catch(() => {});
-    return task;
-  }
-
-  async activate(name, persist) {
+  async activate(name) {
     if (this.client.skills.has(name)) return false;
     const available = await this.discover();
     if (!available.has(name))
@@ -208,40 +192,8 @@ export class SkillManager {
           this.client.off(event, listener);
       }
     };
-    const next = [...this.client.skills.keys(), name];
-    if (persist) {
-      try {
-        await this.save(next);
-      } catch {
-        await dispose();
-        throw new SkillError(
-          "Kunde inte spara skill-valet i config.json. Ingen skill aktiverades.",
-        );
-      }
-    }
     this.cleanup.set(name, dispose);
     this.client.skills.set(name, { ...skill, namespace });
-    if (persist) this.config.skills = next;
-    return true;
-  }
-
-  async deactivate(name) {
-    if (!this.client.skills.has(name)) return false;
-    const next = [...this.client.skills.keys()].filter((item) => item !== name);
-    try {
-      await this.save(next);
-    } catch {
-      throw new SkillError(
-        "Kunde inte spara skill-valet i config.json. Skill är fortfarande aktiv.",
-      );
-    }
-    try {
-      await this.cleanup.get(name)();
-    } finally {
-      this.cleanup.delete(name);
-      this.client.skills.delete(name);
-      this.config.skills = next;
-    }
     return true;
   }
 
@@ -258,95 +210,56 @@ export class SkillManager {
   }
 }
 
-export function registerSkillCommands(client, config, manager) {
+export function registerSkillListing(client, config, manager) {
   client.on("messageCreate", async (message) => {
-    if (!acceptsMessage(message, config) || !isOwner(message.author.id, config))
+    if (
+      !acceptsMessage(message, config) ||
+      !isOwner(message.author.id, config) ||
+      message.content.trim().toLowerCase() !== "!skills"
+    )
       return;
-    const [command, action, name, ...rest] = message.content
-      .trim()
-      .toLowerCase()
-      .split(/\s+/);
-    if (!["!skill", "!skills"].includes(command)) return;
     try {
-      if (command === "!skills") {
-        const available = await manager.discover();
-        const rows = [...available.keys()]
-          .sort()
-          .map((name) => [
-            name,
-            client.skills.has(name) ? "aktiv" : "avstängd",
-            client.skills.has(name)
-              ? `!${skillNamespace(client.skills.get(name))}`
-              : "—",
-          ]);
-        await reply(
-          message,
-          codeBox(
-            "Skills",
-            [
-              rows.length
-                ? table(
-                    [
-                      { label: "Skill", maxWidth: 48 },
-                      { label: "Status" },
-                      { label: "Prefix" },
-                    ],
-                    rows,
-                  )
-                : "Inga skill-moduler hittades.",
-              "",
-              fields([
-                ["Aktivera", "!skill add <namn>"],
-                ["Stäng av", "!skill remove <namn>"],
-              ]),
-            ].join("\n"),
-          ),
-        );
-        return;
-      }
-      if (
-        !["add", "remove"].includes(action) ||
-        !name ||
-        !/^[a-z0-9][a-z0-9_-]*$/.test(name) ||
-        rest.length
-      ) {
-        await reply(
-          message,
-          "Använd `!skills`, `!skill add <namn>` eller `!skill remove <namn>`.",
-        );
-        return;
-      }
-      const changed = await manager.change(action, name);
+      const available = await manager.discover();
+      const rows = [...available.keys()]
+        .sort()
+        .map((name) => [
+          name,
+          client.skills.has(name) ? "aktiv" : "avstängd",
+          client.skills.has(name)
+            ? `!${skillNamespace(client.skills.get(name))}`
+            : "—",
+        ]);
       await reply(
         message,
         codeBox(
-          "Skill-hantering",
-          fields([
-            ["Skill", name],
-            [
-              "Status",
-              changed
-                ? action === "add"
-                  ? "har aktiverats"
-                  : "har stängts av"
-                : action === "add"
-                  ? "är redan aktiv"
-                  : "är redan avstängd",
-            ],
-            ["Sparat", "Valet gäller även efter omstart."],
-          ]),
+          "Skills",
+          [
+            rows.length
+              ? table(
+                  [
+                    { label: "Skill", maxWidth: 48 },
+                    { label: "Status" },
+                    { label: "Prefix" },
+                  ],
+                  rows,
+                )
+              : "Inga skill-moduler hittades.",
+            "",
+            fields([
+              ["Konfiguration", "Ändra skills-listan manuellt i config.json."],
+              ["Omstart", "Starta om boten för att tillämpa ändringen."],
+            ]),
+          ].join("\n"),
         ),
       );
-    } catch (error) {
+    } catch {
       try {
         await reply(
           message,
-          error instanceof SkillError
-            ? error.message
-            : "Skill-hanteringen misslyckades. Kontrollera modulens cleanup-funktion.",
+          "Kunde inte lista skills. Kontrollera src/skills/.",
         );
       } catch {
-        console.error("Could not send skill-management response to Discord.");
+        console.error("Could not send skill listing to Discord.");
       }
     }
   });

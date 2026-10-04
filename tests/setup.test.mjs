@@ -20,6 +20,16 @@ async function folder(t) {
 test("initialization creates empty private configurations without overwriting existing files", async (t) => {
   const root = await folder(t);
   assert.equal((await initializeFiles(root)).length, 4);
+  assert.deepEqual(
+    JSON.parse(await readFile(join(root, "config.json"))).skills,
+    [],
+  );
+  assert.deepEqual(
+    JSON.parse(
+      await readFile(new URL("../config.example.json", import.meta.url)),
+    ).skills,
+    [],
+  );
   const printers = JSON.parse(await readFile(join(root, "printers.json")));
   assert.deepEqual(printers, { printers: {}, groups: {} });
   assert.equal(JSON.parse(await readFile(join(root, "ai.json"))).active, null);
@@ -31,16 +41,17 @@ test("initialization creates empty private configurations without overwriting ex
     assert.equal((await stat(join(root, name))).mode & 0o777, 0o600);
 });
 
-test("setup hides the token prompt, selects skills and channels, and preserves unrelated secrets", async (t) => {
+test("setup hides the token prompt, leaves all skills disabled and preserves unrelated secrets", async (t) => {
   const root = await folder(t);
   await initializeFiles(root);
   const previous =
     "BAMBU_ACCESS_CODE=printer-test-secret\nOPENAI_API_KEY=ai-test-secret\n";
   await writeFile(join(root, ".env"), previous);
-  const answers = [token, owner + ", " + owner, channel, "3dprinter, ai"];
+  const answers = [token, owner + ", " + owner, channel];
   const logs = [];
   const config = await setupBot(root, {
     prompt: async (question, options) => {
+      assert.doesNotMatch(question, /skills/i);
       if (question.startsWith("Discord bot token"))
         assert.equal(options.hidden, true);
       return answers.shift();
@@ -49,7 +60,8 @@ test("setup hides the token prompt, selects skills and channels, and preserves u
   });
   assert.deepEqual(config.owners, [owner]);
   assert.deepEqual(config.channelIds, [channel]);
-  assert.deepEqual(config.skills, ["3dprinter", "ai"]);
+  assert.deepEqual(config.skills, []);
+  assert.equal(answers.length, 0);
   const content = await readFile(join(root, ".env"), "utf8");
   assert.ok(content.startsWith(previous));
   assert.equal(parseEnv(content).DISCORD_TOKEN, token);
@@ -63,7 +75,7 @@ test("setup hides the token prompt, selects skills and channels, and preserves u
   );
 });
 
-test("reconfiguration retains existing token, owners, permissions and printer configuration", async (t) => {
+test("reconfiguration retains manually enabled skills, credentials and other configuration", async (t) => {
   const root = await folder(t);
   await initializeFiles(root);
   const config = {
@@ -90,10 +102,10 @@ test("reconfiguration retains existing token, owners, permissions and printer co
   );
 });
 
-test("invalid IDs and unknown skills leave existing settings untouched", async (t) => {
+test("invalid owner and channel IDs leave existing settings untouched", async (t) => {
   for (const answers of [
-    [token, "975510"],
-    [token, owner, "all", "does-not-exist"],
+    [token, "123456"],
+    [token, owner, "not-a-channel-id"],
   ]) {
     const root = await folder(t);
     await initializeFiles(root);
@@ -102,7 +114,7 @@ test("invalid IDs and unknown skills leave existing settings untouched", async (
     );
     await assert.rejects(
       setupBot(root, { prompt: async () => answers.shift(), log: () => {} }),
-      /full Discord IDs|listed skill names/,
+      /full Discord IDs/,
     );
     assert.deepEqual(
       await Promise.all(
@@ -118,7 +130,7 @@ test("invalid IDs and unknown skills leave existing settings untouched", async (
 test("setup refuses to overwrite edits made while the user answers prompts", async (t) => {
   const root = await folder(t);
   await initializeFiles(root);
-  const answers = [token, owner, "all", "3dprinter"];
+  const answers = [token, owner, "all"];
   const external = "# Changed elsewhere\nDISCORD_TOKEN=another-example-token\n";
   await assert.rejects(
     setupBot(root, {

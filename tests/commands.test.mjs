@@ -82,14 +82,9 @@ test("main help remains available without skills and labels owner-only commands"
     await handle(msg);
     assert.equal(msg.replies.length, 1);
     const text = msg.replies[0].content;
-    for (const command of [
-      "!help",
-      "!info",
-      "!skills",
-      "!skill add <namn>",
-      "!skill remove <namn>",
-    ])
+    for (const command of ["!help", "!info", "!skills"])
       assert.ok(text.includes(command));
+    assert.doesNotMatch(text, /!skill\s/);
     assert.match(text, /!info.*endast ägare/);
     assert.match(text, /Inga skills är laddade/);
     assert.deepEqual(msg.replies[0].allowedMentions, {

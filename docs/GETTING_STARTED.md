@@ -44,9 +44,8 @@ npm run setup
 - Paste the **bot token**. The terminal deliberately displays no token or asterisks.
 - Paste **owner user IDs**, separated by commas.
 - Enter allowed **channel IDs**, or `all` for all server channels the bot can access. On a first installation, Enter also means all.
-- Choose skills: `3dprinter`, `ai`, both separated by commas, or `none`. Enter keeps the displayed selection.
 
-Setup stores credentials locally and creates empty printer configuration. Selecting `ai` loads its commands; configure a model separately in `ai.json`. Setup sends nothing to Discord.
+Setup stores credentials locally and creates empty printer configuration. Every skill is disabled on a fresh installation. Setup preserves existing skill selections when run again; it sends nothing to Discord.
 
 To create only missing files without prompts, run `npm run setup -- --init`. This never overwrites existing files. Add owners and token before starting. Examples document settings and contain no working credentials.
 
@@ -66,7 +65,20 @@ After `Logged in as …` appears, type in your server channel:
 
 `!info` is owner-only. Commands do not work in DMs. Keep the terminal open and computer awake; **Ctrl+C** stops the bot. Do not run two copies with the same bot token.
 
-Next, [add printers](../howto/PRINTERS.md), [configure AI](../howto/AI.md), or [enable Linux startup](DEPLOYMENT.md).
+## 5. Enable the Skills You Want
+
+Stop the bot with **Ctrl+C**. Open `config.json` in a text editor and find `"skills": []`. Replace only that list as needed:
+
+| Skills to enable | Value in `config.json`          |
+| ---------------- | ------------------------------- |
+| None (default)   | `"skills": []`                  |
+| 3D printers      | `"skills": ["3dprinter"]`       |
+| AI               | `"skills": ["ai"]`              |
+| Both             | `"skills": ["3dprinter", "ai"]` |
+
+Save the file, run `npm run check`, and start the bot again with `npm start`. Check `!info` or `!skills` in Discord. Skills can only be enabled or disabled by manually editing this list and restarting; remove a name to disable it. The main bot works with an empty list.
+
+Next, [add printers](../howto/PRINTERS.md), [configure AI](../howto/AI.md), or [enable Linux startup](DEPLOYMENT.md). Device and model configuration does not automatically enable a skill.
 
 ## Troubleshooting
 
@@ -79,6 +91,7 @@ Next, [add printers](../howto/PRINTERS.md), [configure AI](../howto/AI.md), or [
 | Disallowed gateway intent           | Enable Message Content Intent for this application.                                      |
 | Online but no reply                 | Use a server text channel; check channel restrictions and read/send/history permissions. |
 | No `!info` reply                    | Check your user ID in `owners`.                                                          |
+| No `!3d` or `!ai` commands          | Add the skill's module ID to `config.json` → `skills`, then restart the bot.             |
 | No printers or selected AI          | Add your devices or choose an AI profile.                                                |
 
 Keep credentials and backups private when requesting help. Share error messages with tokens and device information removed.

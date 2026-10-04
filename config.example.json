@@ -1,7 +1,7 @@
 {
   "owners": [],
   "channelIds": [],
-  "skills": ["3dprinter"],
+  "skills": [],
   "permissions": {
     "3d.status": [],
     "3d.ams": [],

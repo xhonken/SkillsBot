@@ -1,6 +1,6 @@
 {
   "name": "skillsbot",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "A modular Discord bot with configurable AI and 3D printer skills",
   "main": "src/bot.js",
   "type": "module",

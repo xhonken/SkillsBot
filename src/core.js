@@ -18,16 +18,6 @@ const MAIN_COMMANDS = [
     description: "Lista tillgängliga skills och vilka som är aktiva.",
     ownerOnly: true,
   },
-  {
-    command: "!skill add <namn>",
-    description: "Aktivera en skill och spara valet.",
-    ownerOnly: true,
-  },
-  {
-    command: "!skill remove <namn>",
-    description: "Stäng av en skill och spara valet.",
-    ownerOnly: true,
-  },
 ];
 
 function commandList(entries, userId, config) {

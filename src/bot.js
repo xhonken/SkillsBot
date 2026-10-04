@@ -2,7 +2,7 @@ import { Client, GatewayIntentBits, Collection } from "discord.js";
 import { readFile } from "node:fs/promises";
 import { loadConfig } from "./permissions.js";
 import { registerHelp, registerInfo } from "./core.js";
-import { SkillManager, registerSkillCommands } from "./skill-manager.js";
+import { SkillManager, registerSkillListing } from "./skill-manager.js";
 
 async function main() {
   const config = await loadConfig();
@@ -26,7 +26,7 @@ async function main() {
   registerHelp(client, config);
   const manager = new SkillManager(client, config);
   await manager.start();
-  registerSkillCommands(client, config, manager);
+  registerSkillListing(client, config, manager);
   console.log(
     `Loaded skills: ${[...client.skills.keys()].join(", ") || "(none)"}`,
   );

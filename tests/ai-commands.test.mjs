@@ -341,7 +341,7 @@ test("a failed Discord acknowledgement does not start an AI API request", async 
   assert.ok(logged.includes("AI command could not send a Discord reply."));
 });
 
-test("AI and printer skills coexist with dynamic help and can be independently disabled", async (t) => {
+test("AI and printer skills coexist with help reflecting the configured selection after restart", async (t) => {
   const client = new EventEmitter();
   client.skills = new Map();
   const botConfig = { ...config, skills: ["3dprinter", "ai"] };
@@ -389,7 +389,6 @@ test("AI and printer skills coexist with dynamic help and can be independently d
   const manager = new SkillManager(client, botConfig, {
     discover: async () => new Map([...modules.keys()].map((id) => [id, id])),
     load: async (id) => modules.get(id),
-    save: async () => {},
   });
   t.after(() => manager.stop());
   registerHelp(client, botConfig);
@@ -419,12 +418,16 @@ test("AI and printer skills coexist with dynamic help and can be independently d
   assert.equal(printerLoads, 1);
   assert.equal(aiLoads, 1);
   assert.match((await ask("!info")).replies[0].content, /3dprinter, ai/);
-  await manager.change("remove", "ai");
+  await manager.stop();
+  botConfig.skills = ["3dprinter"];
+  await manager.start();
   assert.equal((await ask("!ai info")).replies.length, 0);
   assert.doesNotMatch(
     (await ask("!help")).replies.map((r) => r.content).join("\n"),
     /!ai info/,
   );
-  await manager.change("add", "ai");
+  await manager.stop();
+  botConfig.skills = ["3dprinter", "ai"];
+  await manager.start();
   assert.equal((await ask("!ai help")).replies.length, 1);
 });
