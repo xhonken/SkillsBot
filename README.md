@@ -1,19 +1,20 @@
 # SkillsBot
 
-A Discord bot with a configurable skill system. All skills are disabled by default; enable the modules you want manually in `config.json`:
+A modular Discord bot. Install the **main bot** first, then choose the **skills** you want. Every skill is disabled by default and must be enabled manually in `config.json`, followed by a restart.
 
-- **3D printers:** progress, time remaining, errors, groups, and multi-unit Bambu AMS information.
-- **AI:** local OpenAI-compatible models, OpenAI, or Claude with your own credentials.
-- **Your own skills:** add modules with separate command prefixes and enable or disable them independently.
+| Part             | Responsibilities                                                                               | Start here                                       |
+| ---------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Main bot         | Discord login, owners, allowed channels, help, version, and loading your selected skills.      | [Main-bot installation](docs/GETTING_STARTED.md) |
+| 3D printer skill | Printer status/progress, remaining time, errors, groups, and multi-unit Bambu AMS information. | [Printer setup](howto/PRINTERS.md)               |
+| AI skill         | Questions to a local compatible AI server, OpenAI, or Claude using your own configuration.     | [AI setup](howto/AI.md)                          |
 
-Replies use labelled code blocks and tables. Printer monitoring does not start or control prints. AI questions are owner-only by default. Bot replies and printer-wizard prompts are currently Swedish; installation documentation is English.
+The main bot works without printers or AI. Replies use labelled code blocks and tables. Bot replies and printer-wizard prompts are currently Swedish; documentation is English.
 
-## Install and Start
+## Installation
 
-Install [Node.js 24 LTS](https://nodejs.org/en/download) and [Git](https://git-scm.com/downloads). Node.js 20.19+ is the minimum. Windows, macOS, and Linux can run the bot; Linux with systemd also supports startup after reboot.
+For a first installation, follow [Install and Configure the Main Bot](docs/GETTING_STARTED.md). It walks through software installation, creating/inviting the Discord bot, obtaining IDs and a token, setup, and verification. Use Node.js 24 LTS and Git; Node.js 20.19+ is the project minimum.
 
-1. Follow [Getting started](docs/GETTING_STARTED.md) to create your Discord application, enable Message Content Intent, invite it, and copy your user ID.
-2. Open a terminal and run:
+Once you have prepared Discord, the terminal commands are:
 
 ```bash
 git clone https://github.com/xhonken/SkillsBot.git
@@ -24,65 +25,39 @@ npm run check
 npm start
 ```
 
-Setup asks for your bot token (hidden input), owner IDs, and allowed channels. It creates private files with **no enabled skills**, an **empty printer list**, and **no active AI model**.
+Setup asks only for the Discord token (hidden input), owner IDs, and allowed channels. It creates private configuration with no enabled skills, no printers, and no selected AI. In Discord, verify `!help` and `!info` before configuring optional skills.
 
-Wait for `Logged in as …`, then type `!help` and `!info` in a server text channel. Keep the terminal open; **Ctrl+C** stops the bot. See [Linux automatic startup](docs/DEPLOYMENT.md) to run after reboot.
+## Main-Bot Commands
 
-## Enable or Disable Skills
+| Command   | Purpose                                                      |
+| --------- | ------------------------------------------------------------ |
+| `!help`   | Show the main commands and the commands of loaded skills.    |
+| `!info`   | Show version and loaded skills; owners only.                 |
+| `!skills` | List available skills and their current status; owners only. |
 
-Stop the bot, open private `config.json`, and edit its existing `skills` list:
+Owners, channel restrictions, file editing, backups, and restart rules are explained in [Configuration Basics](docs/CONFIGURATION.md). Enable a skill by adding its module ID to the existing `skills` list in private `config.json`; remove its ID to disable it. Restart after either change. Discord cannot change the selection.
 
-```json
-"skills": []
-```
+## Optional Skill Commands
 
-An empty list disables every skill. Use `["3dprinter"]` for printers, `["ai"]` for AI, or `["3dprinter", "ai"]` for both. Save, run `npm run check`, and restart the bot. Remove a name from the list to disable that skill.
+Skill commands exist only when that skill is enabled. Configure it using its separate guide:
 
-`!skills` lists available modules and their current status; `!info` confirms the loaded selection. Activation and removal require manual configuration and a restart. Adding device settings, selecting an AI model, or placing a module in `src/skills/` does not enable it.
+| Skill                            | Module ID in `config.json` | Discord examples                                               |
+| -------------------------------- | -------------------------- | -------------------------------------------------------------- |
+| [3D printers](howto/PRINTERS.md) | `3dprinter`                | `!3d printers`, `!3d status bambu1`, `!3d ams all`, `!3d help` |
+| [AI](howto/AI.md)                | `ai`                       | `!ai info`, `!ai q Say hello`, `!ai help`                      |
 
-## Commands
+The printer guide covers adding/removing devices and groups. Connections use Bambu MQTT, Moonraker, OctoPrint, or PrusaLink; see [Compatibility](docs/COMPATIBILITY.md) for supported brand/API combinations. Printer commands monitor rather than control prints.
 
-| Command                              | Purpose                                                      |
-| ------------------------------------ | ------------------------------------------------------------ |
-| `!help`                              | List main-bot and currently loaded skill commands.           |
-| `!info`                              | Show version and active skills; owners only.                 |
-| `!skills`                            | List available and active modules; owners only.              |
-| `!3d status <printer\|group\|all>`   | Show progress, time remaining, and errors.                   |
-| `!3d ams <printer\|group\|all>`      | Show AMS slots, filament, colors, and estimated amount left. |
-| `!3d printers [printer\|group\|all]` | List configured printers and groups.                         |
-| `!3d brands` / `!3d help`            | Show supported connection choices or printer commands.       |
-| `!ai info` / `!ai help`              | Show the selected AI model or AI commands.                   |
-| `!ai q <question>`                   | Ask the configured AI; owners only by default.               |
+The AI guide provides separate examples for local models, OpenAI, and Claude. AI questions are owner-only by default. SkillsBot connects to an existing model API; it does not host models. Selecting a model or adding device settings does not enable a skill.
 
-Skill commands are available while that skill is loaded. Each skill owns its prefix. Example: `!3d ams farm` uses a group named `farm`.
+## Keep It Running and Maintain It
 
-## Add Your Devices and AI
+- [Linux automatic startup and updates](docs/DEPLOYMENT.md): run after reboot on a Raspberry Pi/Linux server, inspect logs, and restart the service.
+- [All user guides](howto/README.md): main-bot and skill documentation in one index.
+- [Write a skill](docs/SKILLS.md): add trusted local modules with separate command prefixes.
+- [Contribute and test](CONTRIBUTING.md): development checks and conventions.
 
-For a Bambu printer, run `npm run printer:add` in the project folder. Enter its IP and LAN code; name, serial, model, firmware, and AMS units are fetched when supported. An optional group can be selected. Other printers use `printers.json` and `printers.example.json`.
-
-The brand catalog includes Bambu Lab, Prusa, Creality, Anycubic, Elegoo, Sovol, QIDI, Flashforge, UltiMaker, and Voron. Connections require Bambu MQTT, Moonraker, OctoPrint, or PrusaLink; a brand name alone does not provide support. See [Compatibility](docs/COMPATIBILITY.md).
-
-For AI, edit private `ai.json` and select a profile with `active`. A local compatible API can use `apiKeyEnv: null`. Hosted APIs use your key in `.env`; paid usage follows provider terms. SkillsBot does not install or host AI models.
-
-- [Add and remove printers](howto/PRINTERS.md)
-- [Configure AI](howto/AI.md)
-- [Write a skill](docs/SKILLS.md)
-- [Contribute and test](CONTRIBUTING.md)
-
-## Configuration and Privacy
-
-| Private file    | Contains                                                     |
-| --------------- | ------------------------------------------------------------ |
-| `.env`          | Discord token, printer LAN codes, and API keys.              |
-| `config.json`   | Owners, allowed channels, selected skills, and access rules. |
-| `printers.json` | Your printer connections, metadata, and groups.              |
-| `ai.json`       | Your selected model and AI endpoint settings.                |
-
-These files, `.backups/`, and generated service files are ignored by Git. Public examples contain placeholders only. Review staged files before committing; never force-add private files.
-
-Run `npm run setup` again **with the bot stopped** to change core settings. Enter keeps existing values; setup preserves the manually configured skill selection. Printer and AI settings reload on their next command; owner/channel/permission/skill changes require a restart. Restrict commands with user-ID arrays under `permissions`, such as `"ai.q": ["YOUR_USER_ID"]`. An empty array permits everyone; owners bypass these lists.
-
-If the bot is online but silent, check Message Content Intent, channel permissions, and configured channel IDs. `npm run check` diagnoses configuration errors; [Getting started](docs/GETTING_STARTED.md#troubleshooting) covers first-run problems.
+Keep `.env`, `config.json`, `printers.json`, `ai.json`, and `.backups/` private. They are ignored by Git; public templates contain placeholders. Preserve existing private settings when updating or adding another device/profile.
 
 ## License
 
