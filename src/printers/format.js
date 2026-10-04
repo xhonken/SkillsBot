@@ -2,7 +2,7 @@ import { codeBox, fields, safeText } from "../messages.js";
 import { describeFilamentColor } from "./ams-colors.js";
 
 export function duration(seconds) {
-  if (seconds === null || seconds === undefined) return "okänd";
+  if (seconds === null || seconds === undefined) return "unknown";
   if (seconds === 0) return "0 min";
   const minutes = Math.ceil(seconds / 60);
   const hours = Math.floor(minutes / 60);
@@ -13,35 +13,35 @@ export function duration(seconds) {
 
 export function formatStatus(name, status) {
   const labels = {
-    printing: "Skriver ut",
-    paused: "Pausad",
-    idle: "Ingen pågående utskrift",
-    completed: "Utskrift klar; ingen pågående utskrift",
-    cancelled: "Utskrift stoppad; ingen pågående utskrift",
-    offline: "Skrivaren är offline",
-    unavailable: "Status kunde inte hämtas",
-    disabled: "Inaktiverad i konfigurationen",
-    error: "Skrivaren rapporterar fel",
-    attention: "Skrivaren kräver åtgärd",
-    unknown: "Okänd status",
-    preparing: "Förbereder utskrift",
+    printing: "Printing",
+    paused: "Paused",
+    idle: "No active print job",
+    completed: "Print completed; no active print job",
+    cancelled: "Print stopped; no active print job",
+    offline: "Printer is offline",
+    unavailable: "Status could not be fetched",
+    disabled: "Disabled in configuration",
+    error: "Printer reports an error",
+    attention: "Printer needs attention",
+    unknown: "Unknown status",
+    preparing: "Preparing to print",
   };
   const rows = [["Status", labels[status.state] || labels.unknown]];
   if (["printing", "paused"].includes(status.state)) {
     const pct =
       status.percentage === null || status.percentage === undefined
-        ? "okänd procent"
+        ? "unknown progress"
         : `${Math.round(status.percentage * 10) / 10}%`;
     rows.push(
-      ["Framsteg", pct],
-      ["Tid kvar", duration(status.remainingSeconds)],
+      ["Progress", pct],
+      ["Time left", duration(status.remainingSeconds)],
     );
     if (status.estimateSource === "progress")
-      rows.push(["Tidkälla", "uppskattning från framsteg"]);
+      rows.push(["Estimate source", "estimated from progress"]);
   }
-  if (status.error) rows.push(["Fel / HMS", status.error]);
+  if (status.error) rows.push(["Error / HMS", status.error]);
   if (status.cached)
-    rows.push(["Uppdatering", "hämtad under de senaste 5 sekunderna"]);
+    rows.push(["Updated", "fetched within the last 5 seconds"]);
   return codeBox(name, fields(rows));
 }
 
@@ -58,17 +58,16 @@ export function formatAMS(name, status) {
   if (status.state === "unavailable" || status.state === "disabled")
     return formatStatus(name, status);
   if (status.ams === null)
-    return codeBox(name, "AMS-information rapporterades inte av skrivaren.");
-  if (!status.ams.length)
-    return codeBox(name, "Inga AMS-enheter rapporterades.");
+    return codeBox(name, "The printer did not report AMS information.");
+  if (!status.ams.length) return codeBox(name, "No AMS units were reported.");
   const lines = [title];
   for (const unit of status.ams) {
     lines.push("```text", `AMS ${tableCell(unit.id, 8)}`);
-    if (!unit.trays.length) lines.push("Inga fack rapporterades.");
+    if (!unit.trays.length) lines.push("No slots were reported.");
     else
       lines.push(
-        "Fack  Filament         Kvar  Färg",
-        "────  ────────────  ───────  ──────────────────",
+        "Slot  Filament      Remaining  Color",
+        "────  ────────────  ─────────  ──────────────────",
       );
     for (const tray of unit.trays) {
       const empty = tray.present === false;
@@ -76,14 +75,16 @@ export function formatAMS(name, status) {
         ? "–"
         : tray.remainingPercentage === null ||
             tray.remainingPercentage === undefined
-          ? "Okänt"
+          ? "Unknown"
           : `≈${Math.round(tray.remainingPercentage)}%`;
       lines.push(
-        `${tableCell(tray.id, 4).padEnd(4)}  ${tableCell(empty ? "Tomt" : tray.material || "Okänd", 12).padEnd(12)}  ${remaining.padStart(7)}  ${empty ? "–" : describeFilamentColor(tray.color)}`,
+        `${tableCell(tray.id, 4).padEnd(4)}  ${tableCell(empty ? "Empty" : tray.material || "Unknown", 12).padEnd(12)}  ${remaining.padStart(9)}  ${empty ? "–" : describeFilamentColor(tray.color)}`,
       );
     }
     lines.push("```");
   }
-  lines.push("≈ uppskattad mängd kvar · Färgrutor visar ungefärlig basfärg.");
+  lines.push(
+    "≈ estimated amount remaining · Color squares show approximate base colors.",
+  );
   return lines.join("\n");
 }

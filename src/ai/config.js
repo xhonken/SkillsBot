@@ -136,7 +136,7 @@ export function validateAIConfig(value) {
     throw new AIConfigError("active must match an AI profile ID, or be null.");
   const systemPrompt =
     value.systemPrompt ??
-    "Du är SkillsBots AI-assistent. Svara tydligt och hjälpsamt på svenska, om användaren inte önskar ett annat språk. Använd enkel text och bevara radbrytningar och indrag när du visar kod.";
+    "You are SkillsBot's AI assistant. Answer clearly and helpfully in English unless the user requests another language. Use plain text and preserve line breaks and indentation when showing code.";
   if (typeof systemPrompt !== "string" || systemPrompt.length > 12000)
     throw new AIConfigError("systemPrompt must be at most 12000 characters.");
   return {

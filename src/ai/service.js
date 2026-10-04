@@ -9,25 +9,25 @@ export class AIRequestError extends Error {
 
 export function aiErrorMessage(error) {
   if (error instanceof AIConfigError)
-    return "AI-inställningarna kunde inte läsas. Kontrollera ai.json och .env lokalt med npm run check.";
+    return "AI settings could not be read. Check ai.json and .env locally with npm run check.";
   const messages = {
     authentication:
-      "AI-tjänsten nekade åtkomst. Kontrollera API-nyckeln och kontots behörighet lokalt.",
-    missing: "Modellen eller API-adressen hittades inte. Kontrollera ai.json.",
-    rate: "AI-tjänstens anropsgräns eller kvot är nådd. Försök senare eller kontrollera kontot.",
+      "The AI service denied access. Check your API key and account permissions locally.",
+    missing: "The model or API address was not found. Check ai.json.",
+    rate: "The AI service rate limit or quota was reached. Retry later or check your account.",
     request:
-      "AI-tjänsten kunde inte godkänna anropet. Kontrollera modellnamn och tokeninställning i ai.json.",
-    unavailable: "AI-tjänsten är tillfälligt otillgänglig. Försök igen senare.",
+      "The AI service rejected the request. Check the model ID and token settings in ai.json.",
+    unavailable: "The AI service is temporarily unavailable. Try again later.",
     timeout:
-      "AI:n hann inte svara inom tidsgränsen. Försök igen eller öka timeoutMs i ai.json för en långsammare lokal modell.",
-    invalid: "AI-tjänsten skickade ett svar som boten inte kunde läsa.",
-    large: "AI-tjänstens svar var för stort. Minska maxOutputTokens i ai.json.",
+      "The AI request timed out. Retry or increase timeoutMs in ai.json for a slower local model.",
+    invalid: "The AI service returned a response the bot could not read.",
+    large: "The AI response was too large. Reduce maxOutputTokens in ai.json.",
     empty:
-      "AI:n gav inget textsvar. Kontrollera modellen; en resonerande modell kan behöva högre maxOutputTokens i ai.json.",
+      "The AI returned no text. Check the model; a reasoning model may need higher maxOutputTokens in ai.json.",
     network:
-      "AI-tjänsten kunde inte nås. Kontrollera att servern körs och att API-adressen är rätt.",
+      "The AI service could not be reached. Check that the server is running and the API address is correct.",
   };
-  return messages[error?.code] ?? "AI-frågan misslyckades. Försök igen senare.";
+  return messages[error?.code] ?? "The AI request failed. Try again later.";
 }
 
 async function responseJSON(response) {

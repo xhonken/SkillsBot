@@ -23,34 +23,34 @@ export async function addPrinter(
   } = {},
 ) {
   const config = await readPrinterConfig(options.configPath);
-  const host = options.host || (await prompt("Skrivarens IP-adress: "));
+  const host = options.host || (await prompt("Printer IP address: "));
   if (!/^[a-zA-Z0-9.-]+$/.test(host))
-    throw new StatusError("Ange en giltig IP-adress eller ett värdnamn.");
-  log("Hämtar skrivarens namn och serienummer…");
+    throw new StatusError("Enter a valid IP address or hostname.");
+  log("Fetching printer name and serial number…");
   const found = await discover(host, { deviceId: options.serial });
   const deviceId =
     options.serial ||
     found?.deviceId ||
-    (await prompt("Serienummer (kunde inte hämtas automatiskt): "));
+    (await prompt("Serial number (could not be discovered automatically): "));
   const previousEntry = Object.entries(config.printers).find(
     ([, p]) => p.protocol === "bambu" && p.deviceId === deviceId,
   );
   const previous = previousEntry?.[1];
-  if (found?.displayName) log(`Hittade ${found.displayName}.`);
-  else log("Namnet kunde inte hämtas automatiskt.");
+  if (found?.displayName) log(`Found ${found.displayName}.`);
+  else log("The name could not be discovered automatically.");
   const displayName =
     options.name ||
     (!found?.displayName
       ? (await prompt(
-          `Skrivarnamn${previous?.displayName ? ` [${previous.displayName}]` : ""}: `,
+          `Printer name${previous?.displayName ? ` [${previous.displayName}]` : ""}: `,
         )) || previous?.displayName
       : undefined);
-  const accessCode = await prompt("LAN-kod (dold inmatning): ", {
+  const accessCode = await prompt("LAN access code (hidden input): ", {
     hidden: true,
   });
   if (!/^[A-Za-z0-9_-]{4,128}$/.test(accessCode))
-    throw new StatusError("Ange skrivarens LAN-kod.");
-  log("Kontrollerar anslutningen och hämtar modell, firmware och AMS…");
+    throw new StatusError("Enter the printer LAN access code.");
+  log("Checking connection and fetching model, firmware, and AMS…");
   const result = await inspect(
     { ...previous, host, deviceId },
     {
@@ -75,15 +75,13 @@ export async function addPrinter(
     )
   )
     throw new StatusError(
-      "Skrivar-ID:t ger samma miljövariabel som en annan skrivare; välj ett annat ID med --id.",
+      "The printer ID maps to another printer's environment variable; choose a different ID with --id.",
     );
   const group =
     options.group !== undefined
       ? options.group.toLowerCase()
       : (
-          await prompt(
-            "Grupp (Enter = behåll befintliga grupper eller fristående): ",
-          )
+          await prompt("Group (Enter = keep existing groups or standalone): ")
         ).toLowerCase();
   const printer = { ...result.printer, passwordEnv: key };
   await save([{ id, printer, previous, group }], {
@@ -92,10 +90,10 @@ export async function addPrinter(
     credential: { key, code: accessCode },
   });
   log(
-    `Sparad: ${printer.displayName} (${id}), ${printer.ams.length} AMS-enhet(er).`,
+    `Saved: ${printer.displayName} (${id}), ${printer.ams.length} AMS unit(s).`,
   );
   log(
-    `Testa !3d status ${id} och !3d ams ${id} i Discord. Ingen omstart behövs.`,
+    `Try !3d status ${id} and !3d ams ${id} in Discord after enabling the printer skill in config.json and restarting if needed.`,
   );
   return { id, printer };
 }
@@ -113,7 +111,7 @@ async function main() {
   });
   if (values.help) {
     console.log(
-      "Lägg till en Bambu-skrivare: npm run printer:add\nAnge IP och LAN-kod. Namn, serienummer och AMS hämtas automatiskt.\nValfritt: -- --host <IP> --serial <serienummer> --name <namn> --id <id> --group <grupp>\nLAN-koden anges alltid dolt i terminalen, aldrig som kommandoradsargument.",
+      "Add a Bambu printer: npm run printer:add\nEnter IP and LAN access code. Name, serial, and AMS are discovered when available.\nOptional: -- --host <IP> --serial <serial> --name <name> --id <id> --group <group>\nThe LAN access code is entered privately in the terminal, never as a command-line argument.",
     );
     return;
   }
@@ -125,7 +123,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
     console.error(
       error instanceof StatusError || error instanceof PromptError
         ? error.message
-        : "Skrivaren kunde inte sparas. Kontrollera konfigurationen med npm run check och försök igen.",
+        : "The printer could not be saved. Check configuration with npm run check and retry.",
     );
     process.exitCode = 1;
   });

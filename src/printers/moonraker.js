@@ -11,18 +11,18 @@ import {
 export function parseMoonraker(data) {
   const objects = data.result?.status;
   if (!objects || typeof objects !== "object")
-    throw new StatusError("Moonraker returnerade inget statusobjekt.");
+    throw new StatusError("Moonraker did not return a status object.");
   const hooks = objects.webhooks;
   if (hooks && hooks.state !== "ready") {
     return status({
       state: ["shutdown", "error"].includes(hooks.state) ? "error" : "offline",
-      error: hooks.state_message || "Klipper är inte redo.",
+      error: hooks.state_message || "Klipper is not ready.",
     });
   }
   const stats = objects.print_stats;
   if (!stats || typeof stats.state !== "string")
     throw new StatusError(
-      "Moonraker saknar print_stats; kontrollera Klipper-konfigurationen.",
+      "Moonraker is missing print_stats; check the Klipper configuration.",
     );
   const printerState = state(stats.state);
   const progress =
@@ -44,7 +44,7 @@ export function parseMoonraker(data) {
     estimateSource: remaining !== null ? "progress" : null,
     error:
       printerState === "error"
-        ? stats.message || "Klipper rapporterar ett fel utan feltext."
+        ? stats.message || "Klipper reports an error without a message."
         : null,
   });
 }

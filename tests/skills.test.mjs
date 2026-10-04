@@ -127,15 +127,15 @@ test("a skill with no lifecycle cleanup is rejected and listeners are removed", 
 
 test("missing and invalid skill modules fail without claiming they are loaded", async () => {
   const { manager, modules, client } = setup();
-  await assert.rejects(manager.activate("missing"), /finns inte/);
+  await assert.rejects(manager.activate("missing"), /is not present/);
   modules.set("wrong", { default: { name: "another", register() {} } });
-  await assert.rejects(manager.activate("wrong"), /filnamnet/);
+  await assert.rejects(manager.activate("wrong"), /matching name/);
   assert.equal(client.skills.size, 0);
 });
 
 test("startup failure cleans already loaded skills", async () => {
   const { manager, client } = setup(["a", "missing"]);
-  await assert.rejects(manager.start(), /finns inte/);
+  await assert.rejects(manager.start(), /is not present/);
   assert.equal(client.listenerCount("messageCreate"), 0);
   assert.equal(client.skills.size, 0);
 });
@@ -181,11 +181,11 @@ test("Discord skill listing is read-only and legacy commands cannot change the s
     await send(listing);
     assert.equal(listing.replies.length, 1);
     assert.match(listing.replies[0].content, /config\.json/);
-    assert.match(listing.replies[0].content, /Starta om boten/);
+    assert.match(listing.replies[0].content, /Restart the bot/);
     assert.doesNotMatch(listing.replies[0].content, /!skill\s/);
     assert.match(
       listing.replies[0].content,
-      new RegExp(`a\\s+${names.length ? "aktiv" : "avstängd"}`),
+      new RegExp(`a\\s+${names.length ? "enabled" : "disabled"}`),
     );
     assert.deepEqual([...client.skills.keys()], loaded);
     assert.deepEqual(imports, imported);
@@ -194,7 +194,7 @@ test("Discord skill listing is read-only and legacy commands cannot change the s
     await send(info);
     assert.match(
       info.replies[0].content,
-      names.length ? /Laddade skills\s+a/ : /\(inga\)/,
+      names.length ? /Loaded skills\s+a/ : /\(none\)/,
     );
     await manager.stop();
   }
@@ -266,20 +266,20 @@ test("global help follows the active registry and real printer skill replies onl
     assert.ok(msg.replies.length >= 1);
     assert.equal(imports.length, count);
     const text = msg.replies.map((reply) => reply.content).join("\n");
-    assert.equal((text.match(/SkillsBot – kommandon/g) || []).length, 1);
+    assert.equal((text.match(/SkillsBot – commands/g) || []).length, 1);
     return text;
   };
   try {
-    assert.match(await ask(), /Inga skills är laddade/);
+    assert.match(await ask(), /No skills are loaded/);
     await restart(manager, ["3dprinter", "a", "b"]);
     const loaded = await ask();
     assert.match(loaded, /Skill: 3dprinter/);
-    assert.match(loaded, /!3d status <skrivare\|grupp\|all>/);
-    assert.match(loaded, /!3d ams <skrivare\|grupp\|all>/);
+    assert.match(loaded, /!3d status <printer\|group\|all>/);
+    assert.match(loaded, /!3d ams <printer\|group\|all>/);
     assert.match(loaded, /!hello/);
     assert.match(
       loaded,
-      /Skill: b[\s\S]*Denna skill har ingen registrerad kommandohjälp/,
+      /Skill: b[\s\S]*This skill has no registered command help/,
     );
     assert.doesNotMatch(loaded, /addprinter|addgroup/);
     for (const content of ["!3d", "!3d help", "!help 3d"]) {
@@ -295,7 +295,7 @@ test("global help follows the active registry and real printer skill replies onl
     assert.doesNotMatch(removed, /3dprinter|!3d status|!3d ams/);
     assert.match(removed, /!hello/);
     await manager.stop();
-    assert.match(await ask(), /Inga skills är laddade/);
+    assert.match(await ask(), /No skills are loaded/);
   } finally {
     await manager.stop();
   }
@@ -306,7 +306,7 @@ test("skill prefixes cannot collide with another loaded skill or the main bot", 
   modules.get("a").default.namespace = "3d";
   await manager.activate("a");
   modules.get("b").default.namespace = "3d";
-  await assert.rejects(manager.activate("b"), /används redan/);
+  await assert.rejects(manager.activate("b"), /is already used/);
   assert.equal(client.skills.size, 1);
   assert.equal(client.listenerCount("messageCreate"), 1);
   for (const namespace of [
@@ -318,7 +318,7 @@ test("skill prefixes cannot collide with another loaded skill or the main bot", 
     "bad prefix",
   ]) {
     modules.get("b").default.namespace = namespace;
-    await assert.rejects(manager.activate("b"), /reserverat eller ogiltigt/);
+    await assert.rejects(manager.activate("b"), /reserved or invalid/);
   }
   await manager.stop();
   modules.get("b").default.namespace = "3d";
@@ -336,7 +336,7 @@ test("command metadata and permissions must belong to the declaring skill's name
     [{ command: "!b status", description: "Status.", permission: "ai.status" }],
   ]) {
     modules.get("b").default.commands = commands;
-    await assert.rejects(manager.activate("b"), /måste börja/);
+    await assert.rejects(manager.activate("b"), /must start/);
     assert.equal(client.skills.size, 0);
     assert.equal(client.listenerCount("messageCreate"), 0);
   }
@@ -430,7 +430,7 @@ test("invalid command help is rejected before registering a skill", async () => 
         },
       },
     });
-    await assert.rejects(manager.activate("bad"), /ogiltig kommandohjälp/);
+    await assert.rejects(manager.activate("bad"), /invalid command help/);
     assert.equal(registered, false);
     assert.equal(client.skills.size, 0);
     assert.equal(client.listenerCount("messageCreate"), 0);

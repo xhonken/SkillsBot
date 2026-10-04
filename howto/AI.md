@@ -1,6 +1,6 @@
 # AI Skill: Connect a Model and Ask Questions
 
-Complete [main-bot installation](../docs/GETTING_STARTED.md) first. Confirm `!info` works. This skill connects SkillsBot to an existing AI API; it does not install models or run an AI server.
+Follow the [complete installation guide](../docs/GETTING_STARTED.md) for download, main-bot setup, and optional AI steps first. Confirm `!info` works. This skill connects SkillsBot to an existing AI API; it does not install models or run an AI server.
 
 The module ID is **`ai`**, its commands start with **`!ai`**, and its profiles live in **`ai.json`**. The skill is disabled by default. Choose **one** option below for your first setup.
 
@@ -151,7 +151,7 @@ As a configured owner, send these separately in an allowed server channel:
 
 `!ai info` shows the profile, provider, model, and whether a required key is present. It does **not** prove the server is reachable or that the model is loaded.
 
-`!ai q` is the actual connection/generation test. After basic validation, the bot sends **`Dröj kvar, svaret kommer strax`** (please wait), then returns the answer in labelled code blocks. Large models can take longer; the default timeout is three minutes. Long answers are split into multiple Discord messages.
+`!ai q` is the actual connection/generation test. After basic validation, the bot sends **`Please wait; the answer will arrive shortly.`**, then returns the answer in labelled code blocks. Large models can take longer; the default timeout is three minutes. Long answers are split into multiple Discord messages.
 
 AI questions are **owner-only by default**. Each request sends your question and the configured system prompt. There is no conversation history or automatic access to channel messages, printer data, files, or the web. Hosted providers receive the submitted text under their own terms.
 
@@ -199,7 +199,7 @@ Optional top-level settings include `timeoutMs` (default 180000 milliseconds), `
 If the API only listens on its server's loopback address, ask the server administrator to provide a connection. One option, from the bot computer, is an SSH tunnel:
 
 ```bash
-ssh -N -L 127.0.0.1:18080:127.0.0.1:8080 your-user@ai-server.invalid
+ssh -N -L 127.0.0.1:18081:127.0.0.1:8080 your-user@ai-server.invalid
 ```
 
-Replace the user, hostname, and remote port with your settings. Leave that session running and use `http://127.0.0.1:18080/v1` as `baseUrl`. This tunnel is separate from the bot and does not automatically survive reboot. Skip this section when your server already exposes a reachable API.
+Replace the user, hostname, and remote port with your settings. Leave that session running and use `http://127.0.0.1:18081/v1` as `baseUrl`. This tunnel is separate from the bot and does not automatically survive reboot. Skip this section when your server already exposes a reachable API.

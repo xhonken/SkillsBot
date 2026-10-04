@@ -57,7 +57,7 @@ function setup(t, botConfig = config) {
     },
     ask: async (state, question, options) => {
       calls.push({ state, question, options });
-      return { answer: "Ett AI-svar.", model: state.profile.model };
+      return { answer: "An AI answer.", model: state.profile.model };
     },
   };
   const cleanup = registerAISkill(client, { config: botConfig, service });
@@ -92,7 +92,7 @@ test("AI info describes the selected provider and model without exposing endpoin
   assert.match(text, /AI – information/);
   assert.match(text, /gpt-oss:20b/);
   assert.match(text, /OpenAI/);
-  assert.match(text, /API-nyckel finns/);
+  assert.match(text, /API key present/);
   assert.doesNotMatch(text, /private-host|secret-ai-key|PRIVATE_AI_KEY/);
   assert.equal(calls.length, 0);
   assert.deepEqual(msg.replies[0].allowedMentions, {
@@ -110,31 +110,26 @@ test("AI questions notify the caller before generation and preserve question whi
     started.resolve();
     return answer.promise;
   };
-  const msg = message(
-    " !AI Q Första raden\n  andra raden med  två mellanslag ",
-  );
+  const msg = message(" !AI Q First line\n  second line with  two spaces ");
   const running = handle(msg);
   await started.promise;
   assert.equal(msg.replies.length, 1);
-  assert.match(msg.replies[0].content, /AI – arbetar/);
-  assert.match(msg.replies[0].content, /Dröj kvar/);
-  assert.equal(
-    calls[0].question,
-    "Första raden\n  andra raden med  två mellanslag",
-  );
-  answer.resolve({ answer: "Det färdiga svaret.", model: "resolved-model" });
+  assert.match(msg.replies[0].content, /AI – working/);
+  assert.match(msg.replies[0].content, /Please wait/);
+  assert.equal(calls[0].question, "First line\n  second line with  two spaces");
+  answer.resolve({ answer: "The completed answer.", model: "resolved-model" });
   await running;
   assert.equal(msg.replies.length, 2);
-  assert.match(msg.replies[1].content, /AI – svar/);
+  assert.match(msg.replies[1].content, /AI – answer/);
   assert.match(msg.replies[1].content, /resolved-model/);
-  assert.match(msg.replies[1].content, /Det färdiga svaret/);
+  assert.match(msg.replies[1].content, /The completed answer/);
 });
 
 test("AI questions are owner-only by default and configured permission lists allow other users", async (t) => {
   const denied = setup(t);
   const msg = message("!ai q Question", other);
   await denied.handle(msg);
-  assert.match(msg.replies[0].content, /inte behörighet/);
+  assert.match(msg.replies[0].content, /do not have permission/);
   assert.equal(denied.loads(), 0);
   assert.equal(denied.calls.length, 0);
   const allowed = setup(t, { ...config, permissions: { "ai.q": [other] } });
@@ -151,7 +146,7 @@ test("AI info permissions and channel, guild, bot and namespace restrictions app
   });
   const denied = message("!ai info", other);
   await handle(denied);
-  assert.match(denied.replies[0].content, /inte behörighet/);
+  assert.match(denied.replies[0].content, /do not have permission/);
   for (const msg of [
     message("!ai info", owner, { channelId: "another" }),
     message("!ai q Q", owner, { guildId: null }),
@@ -180,13 +175,13 @@ test("missing AI selection and missing API key are explained without starting ge
     await handle(info);
     assert.match(
       info.replies[0].content,
-      selected.profile ? /API-nyckel saknas/ : /Ingen vald/,
+      selected.profile ? /API key missing/ : /None selected/,
     );
     const question = message("!ai q Q");
     await handle(question);
     assert.equal(question.replies.length, 1);
     assert.match(question.replies[0].content, /howto\/AI.md/);
-    assert.doesNotMatch(question.replies[0].content, /Dröj kvar/);
+    assert.doesNotMatch(question.replies[0].content, /Please wait/);
   }
   assert.equal(calls.length, 0);
 });
@@ -195,10 +190,10 @@ test("empty questions, oversized questions and unsupported AI commands give help
   const { handle, calls, service } = setup(t);
   service.load = async () => configured({ maxQuestionChars: 5 });
   for (const [content, pattern] of [
-    ["!ai q", /!ai q <fråga>/],
-    ["!ai q     ", /!ai q <fråga>/],
-    ["!ai q too long", /högst 5 tecken/],
-    ["!ai info extra", /utan extra argument/],
+    ["!ai q", /!ai q <question>/],
+    ["!ai q     ", /!ai q <question>/],
+    ["!ai q too long", /at most 5 characters/],
+    ["!ai info extra", /without extra arguments/],
     ["!ai unknown", /!ai help/],
   ]) {
     const msg = message(content);
@@ -216,7 +211,7 @@ test("AI errors use a formatted message and never echo provider diagnostics", as
   };
   const invalid = message("!ai info");
   await handle(invalid);
-  assert.match(invalid.replies[0].content, /AI – fel/);
+  assert.match(invalid.replies[0].content, /AI – error/);
   assert.match(invalid.replies[0].content, /npm run check/);
   assert.doesNotMatch(
     invalid.replies[0].content,
@@ -229,8 +224,8 @@ test("AI errors use a formatted message and never echo provider diagnostics", as
   const refused = message("!ai q Q");
   await handle(refused);
   assert.equal(refused.replies.length, 2);
-  assert.match(refused.replies[1].content, /AI – fel/);
-  assert.match(refused.replies[1].content, /nekade åtkomst/);
+  assert.match(refused.replies[1].content, /AI – error/);
+  assert.match(refused.replies[1].content, /denied access/);
 });
 
 test("long AI answers split into balanced code boxes and suppress mentions", async (t) => {
@@ -254,8 +249,8 @@ test("long AI answers split into balanced code boxes and suppress mentions", asy
     });
   }
   const text = msg.replies.map((r) => r.content).join("\n");
-  assert.match(text, /Svaret har kortats/);
-  assert.match(text, /tokengräns/);
+  assert.match(text, /The answer was shortened/);
+  assert.match(text, /token limit/);
 });
 
 test("AI cooldown prevents a second paid request without affecting info", async (t) => {
@@ -264,7 +259,7 @@ test("AI cooldown prevents a second paid request without affecting info", async 
   await handle(message("!ai q First"));
   const duplicate = message("!ai q Second");
   await handle(duplicate);
-  assert.match(duplicate.replies[0].content, /Vänta några sekunder/);
+  assert.match(duplicate.replies[0].content, /Wait a few seconds/);
   assert.equal(calls.length, 1);
   const info = message("!ai info");
   await handle(info);
@@ -288,10 +283,10 @@ test("in-flight questions enforce per-user and global limits without queueing ex
   await started.promise;
   const same = message("!ai q Second");
   await handle(same);
-  assert.match(same.replies[0].content, /förra AI-fråga/);
+  assert.match(same.replies[0].content, /previous AI question/);
   const concurrent = message("!ai q Another", other);
   await handle(concurrent);
-  assert.match(concurrent.replies[0].content, /andra frågor/);
+  assert.match(concurrent.replies[0].content, /other questions/);
   assert.equal(calls.length, 1);
   answer.resolve({ answer: "Finished", model: "gpt-oss:20b" });
   await running;
@@ -403,7 +398,7 @@ test("AI and printer skills coexist with help reflecting the configured selectio
   const help = await ask("!help");
   const text = help.replies.map((r) => r.content).join("\n");
   assert.match(text, /!ai info/);
-  assert.match(text, /!ai q <fråga>/);
+  assert.match(text, /!ai q <question>/);
   assert.match(text, /!3d status/);
   for (const content of ["!ai", "!ai help", "!help ai"]) {
     const msg = await ask(content);

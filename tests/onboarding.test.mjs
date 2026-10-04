@@ -96,7 +96,7 @@ test("real UDP discovery queries only the chosen host, checks serials, and times
   assert.deepEqual(await discoverBambu("127.0.0.1", options), discovery);
   await assert.rejects(
     discoverBambu("127.0.0.1", { ...options, deviceId: "OTHER" }),
-    /annat serienummer/,
+    /different serial number/,
   );
   reply = false;
   assert.equal(await discoverBambu("127.0.0.1", options), null);
@@ -149,7 +149,7 @@ test("manual naming and serial fallback work when LAN discovery is unavailable",
   assert.equal(result.printer.passwordEnv, printer.passwordEnv);
   await assert.rejects(
     inspectBambu({ host: "printer.invalid" }, { discovery: null }),
-    /Serienumret/,
+    /serial number/,
   );
   let calls = 0;
   await assert.rejects(
@@ -159,7 +159,7 @@ test("manual naming and serial fallback work when LAN discovery is unavailable",
         calls++;
       },
     }),
-    /annat serienummer/,
+    /different serial number/,
   );
   assert.equal(calls, 0);
 });
@@ -174,7 +174,7 @@ test("adding a discovered printer needs no manual name or serial, keeps secrets 
       prompts.push([question, options]);
       if (question.includes("IP")) return "printer.invalid";
       if (options?.hidden) return "privatecode";
-      if (question.startsWith("Grupp")) return "P2S";
+      if (question.startsWith("Group")) return "P2S";
       assert.fail(`Unexpected prompt: ${question}`);
     },
     inspect: (p, options) =>
@@ -244,12 +244,12 @@ test("failed connection leaves printer configuration and credentials unchanged",
         discover: async () => discovery,
         prompt: async () => "wrongcode",
         inspect: async () => {
-          throw new StatusError("LAN-koden nekades.");
+          throw new StatusError("LAN access code was denied.");
         },
         log: () => {},
       },
     ),
-    /LAN-koden nekades/,
+    /LAN access code was denied/,
   );
   assert.deepEqual(
     await Promise.all([
@@ -281,7 +281,7 @@ test("saving rejects duplicate serials, invalid groups and concurrent changes be
   await writeFile(`${paths.configPath}.lock`, "locked");
   await assert.rejects(
     savePrinters([{ id: "p2s1", printer }], paths),
-    /annan skrivarguide/,
+    /Another printer setup/,
   );
   assert.equal(await readFile(`${paths.configPath}.lock`, "utf8"), "locked");
 });
@@ -304,7 +304,7 @@ test("printer setup refuses to overwrite the Discord token", async (t) => {
       ...paths,
       credential: { key: "DISCORD_TOKEN", code: "newcode1" },
     }),
-    /Discord-token/,
+    /Discord token/,
   );
   assert.equal(await readFile(paths.envPath, "utf8"), before);
   assert.deepEqual(JSON.parse(await readFile(paths.configPath, "utf8")), {

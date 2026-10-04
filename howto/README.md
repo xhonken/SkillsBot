@@ -2,7 +2,7 @@
 
 ## Main Bot — Start Here
 
-1. [Install and configure the main bot](../docs/GETTING_STARTED.md): install software, create the Discord bot, add owners/channels, and test it with no skills enabled.
+1. [Complete step-by-step installation](../docs/GETTING_STARTED.md): follow the complete numbered walkthrough: download, token, owners/channels, first printer, optional AI, and automatic startup.
 2. [Configuration basics](../docs/CONFIGURATION.md): edit the right files, activate skills manually, keep backups, and understand restart rules.
 3. [Linux automatic startup](../docs/DEPLOYMENT.md): keep the bot running on a Raspberry Pi or Linux server after logout and reboot.
 

@@ -42,11 +42,13 @@ export async function inspectBambu(
       : discovery;
   if (found && connection.deviceId && found.deviceId !== connection.deviceId)
     throw new StatusError(
-      "IP-adressen tillhör en skrivare med ett annat serienummer.",
+      "The IP address belongs to a printer with a different serial number.",
     );
   const deviceId = connection.deviceId || found?.deviceId;
   if (!deviceId)
-    throw new StatusError("Serienumret kunde inte hämtas; ange det manuellt.");
+    throw new StatusError(
+      "The serial number could not be retrieved; enter it manually.",
+    );
   const printer = {
     ...connection,
     brand: "bambulab",
@@ -69,7 +71,7 @@ export async function inspectBambu(
   const info = report.info;
   if (!info || !Array.isArray(info.ams))
     throw new StatusError(
-      "Skrivarens modell och AMS-enheter kunde inte hämtas.",
+      "The printer model and AMS units could not be retrieved.",
     );
   if (saved.port === 8883) delete saved.port;
   if (saved.username === "bblp") delete saved.username;
@@ -92,17 +94,19 @@ export async function inspectBambu(
 
 function envWithCode(content, key, code) {
   if (key === "DISCORD_TOKEN")
-    throw new StatusError("Discord-token får inte ersättas med en LAN-kod.");
+    throw new StatusError(
+      "The Discord token must not be replaced with a LAN access code.",
+    );
   if (
     !/^[A-Za-z_][A-Za-z0-9_]*$/.test(key) ||
     !/^[A-Za-z0-9_-]{4,128}$/.test(code)
   )
     throw new StatusError(
-      "LAN-koden måste bestå av bokstäver, siffror, bindestreck eller understreck.",
+      "The LAN access code must contain letters, numbers, hyphens, or underscores.",
     );
   if (/[\r\n]/.test(parseEnv(content)[key] ?? ""))
     throw new StatusError(
-      "En befintlig flerradig miljövariabel kan inte ersättas automatiskt.",
+      "An existing multiline environment variable cannot be replaced automatically.",
     );
   const line = `${key}=${code}`;
   const pattern = new RegExp(`^\\s*(?:export\\s+)?${key}\\s*=.*$`, "gm");
@@ -138,7 +142,7 @@ export async function savePrinters(
   } catch (error) {
     if (error.code === "EEXIST")
       throw new StatusError(
-        "En annan skrivarguide körs redan. Försök igen när den är klar.",
+        "Another printer setup is already running. Retry when it finishes.",
       );
     throw error;
   }
@@ -152,11 +156,11 @@ export async function savePrinters(
         JSON.stringify(current) !== JSON.stringify(previous)
       )
         throw new StatusError(
-          "Skrivarkonfigurationen ändrades under kontrollen; kör guiden igen.",
+          "Printer configuration changed during the check; run setup again.",
         );
       if (current && current.deviceId !== printer.deviceId)
         throw new StatusError(
-          "Det valda skrivar-ID:t används redan av en annan skrivare.",
+          "The chosen printer ID is already used by another printer.",
         );
       if (
         Object.entries(config.printers).some(
@@ -166,7 +170,9 @@ export async function savePrinters(
             p.deviceId === printer.deviceId,
         )
       )
-        throw new StatusError("Skrivaren är redan inlagd med ett annat ID.");
+        throw new StatusError(
+          "The printer is already configured under a different ID.",
+        );
       config.printers[id] = printer;
       if (group)
         config.groups[group] = [

@@ -3,7 +3,7 @@ import { StatusError, percentage, seconds, state, status } from "./status.js";
 
 export function parseOctoprint(data) {
   if (typeof data.state !== "string")
-    throw new StatusError("OctoPrint saknar skrivarstatus.");
+    throw new StatusError("OctoPrint is missing printer status.");
   const printerState = state(data.state);
   return status({
     state: printerState,
@@ -12,7 +12,7 @@ export function parseOctoprint(data) {
     error:
       data.error ||
       (printerState === "error"
-        ? "OctoPrint rapporterar ett fel utan feltext."
+        ? "OctoPrint reports an error without a message."
         : null),
   });
 }

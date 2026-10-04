@@ -52,7 +52,7 @@ test("!info responds only to configured owners with the version and loaded skill
     await handle(msg);
     assert.match(
       msg.replies[0].content,
-      /Version\s+v0\.2\.0[\s\S]*Laddade skills\s+3dprinter, hello/,
+      /Version\s+v0\.2\.0[\s\S]*Loaded skills\s+3dprinter, hello/,
     );
     assert.deepEqual(msg.replies[0].allowedMentions, {
       parse: [],
@@ -85,8 +85,8 @@ test("main help remains available without skills and labels owner-only commands"
     for (const command of ["!help", "!info", "!skills"])
       assert.ok(text.includes(command));
     assert.doesNotMatch(text, /!skill\s/);
-    assert.match(text, /!info.*endast ägare/);
-    assert.match(text, /Inga skills är laddade/);
+    assert.match(text, /!info.*owners only/);
+    assert.match(text, /No skills are loaded/);
     assert.deepEqual(msg.replies[0].allowedMentions, {
       parse: [],
       repliedUser: false,
@@ -101,11 +101,11 @@ test("main help respects configured permissions, channels and server-only comman
   const handle = client.listeners("messageCreate")[0];
   const denied = message("!help", other);
   await handle(denied);
-  assert.match(denied.replies[0].content, /inte behörighet/);
+  assert.match(denied.replies[0].content, /do not have permission/);
   assert.doesNotMatch(denied.replies[0].content, /!info|!skill/);
   const allowed = message("!help", owner);
   await handle(allowed);
-  assert.match(allowed.replies[0].content, /Huvudbot/);
+  assert.match(allowed.replies[0].content, /Main bot/);
   for (const msg of [
     message("!help", owner, { guildId: null }),
     message("!help", owner, { channelId: "another" }),
@@ -148,7 +148,7 @@ test("skill-specific help is supplied by the core and follows the loaded namespa
     await handle(msg);
     assert.match(msg.replies[0].content, /Skill: 3dprinter \(!3d\)/);
     assert.match(msg.replies[0].content, /!3d status/);
-    assert.doesNotMatch(msg.replies[0].content, /Huvudbot|!info/);
+    assert.doesNotMatch(msg.replies[0].content, /Main bot|!info/);
   }
   client.skills.clear();
   const unloaded = message("!3d help");
@@ -156,7 +156,7 @@ test("skill-specific help is supplied by the core and follows the loaded namespa
   assert.equal(unloaded.replies.length, 0);
   const missing = message("!help 3d");
   await handle(missing);
-  assert.match(missing.replies[0].content, /Ingen laddad skill/);
+  assert.match(missing.replies[0].content, /No loaded skill/);
 });
 
 test("global and per-skill help restrictions apply to namespace help", async () => {
@@ -169,7 +169,7 @@ test("global and per-skill help restrictions apply to namespace help", async () 
     for (const command of ["!3d", "!3d help", "!help 3d"]) {
       const msg = message(command, other);
       await client.listeners("messageCreate")[0](msg);
-      assert.match(msg.replies[0].content, /inte behörighet/);
+      assert.match(msg.replies[0].content, /do not have permission/);
     }
   }
 });
@@ -196,7 +196,7 @@ test("large combined help retains every skill command and suppresses mentions", 
   const text = msg.replies.map((reply) => reply.content).join("\n");
   for (let n = 0; n < 40; n++)
     assert.match(text, new RegExp(`^!command${n}\\s`, "m"));
-  assert.match(text, /kräver behörighet/);
+  assert.match(text, /permission required/);
   assert.doesNotMatch(text, /@everyone/);
   assert.ok(
     msg.replies.every(
@@ -287,7 +287,7 @@ test("permissions are checked before loading or contacting printers", async () =
   };
   const msg = message("!3d status all", other);
   await handle(msg);
-  assert.match(msg.replies[0].content, /inte behörighet/);
+  assert.match(msg.replies[0].content, /do not have permission/);
   assert.equal(calls.length, 0);
 });
 
@@ -344,7 +344,7 @@ test("printer listings accept individual printers, groups and all without exposi
   const detail = single.replies[0].content;
   assert.match(detail, /Bambu Lab P2S/);
   assert.match(detail, /01\.03\.00\.00/);
-  assert.match(detail, /AMS-enheter\s+1/);
+  assert.match(detail, /AMS units\s+1/);
   assert.doesNotMatch(detail, /private-host|private-code|voron|solo/);
   const group = message("!3d printers FARM");
   await handle(group);
@@ -356,10 +356,10 @@ test("printer listings accept individual printers, groups and all without exposi
   assert.match(all.replies[0].content, /solo/);
   const missing = message("!3d printers missing");
   await handle(missing);
-  assert.match(missing.replies[0].content, /hittades/);
+  assert.match(missing.replies[0].content, /No printer or group/);
   const invalid = message("!3d printers bambu voron");
   await handle(invalid);
-  assert.match(invalid.replies[0].content, /Använd !3d printers/);
+  assert.match(invalid.replies[0].content, /Use !3d printers/);
   assert.equal(calls.length, 0);
 });
 
@@ -371,10 +371,10 @@ test("AMS queries filter unsupported protocols without contacting them", async (
   assert.equal(calls[0][1], true);
   assert.match(
     msg.replies[0].content,
-    /```text\nAMS 0\nFack\s+Filament\s+Kvar\s+Färg/,
+    /```text\nAMS 0\nSlot\s+Filament\s+Remaining\s+Color/,
   );
-  assert.match(msg.replies[0].content, /PLA\s+≈65%\s+🟥 Röd/);
-  assert.match(msg.replies[1].content, /voron[\s\S]*AMS stöds endast/);
+  assert.match(msg.replies[0].content, /PLA\s+≈65%\s+🟥 Red/);
+  assert.match(msg.replies[1].content, /voron[\s\S]*AMS is supported only/);
   assert.equal(msg.replies[0].files, undefined);
   assert.doesNotMatch(msg.replies[0].content, /C12E1FFF/);
 });
@@ -386,7 +386,7 @@ test("AMS tables and color labels work without attachment permission", async () 
   });
   await handle(msg);
   assert.equal(msg.replies[0].files, undefined);
-  assert.match(msg.replies[0].content, /PLA\s+≈65%\s+🟥 Röd/);
+  assert.match(msg.replies[0].content, /PLA\s+≈65%\s+🟥 Red/);
   assert.doesNotMatch(msg.replies[0].content, /C12E1FFF|Bifoga filer/);
 });
 
@@ -410,7 +410,7 @@ test("large multi-unit AMS replies preserve code boxes, rows and Discord limits"
   for (const payload of msg.replies) {
     assert.ok(payload.content.length <= 1900);
     assert.equal((payload.content.match(/^```/gm) || []).length % 2, 0);
-    rows += (payload.content.match(/^\d\s+PLA\s+≈\d+%\s+⬛ Svart/gm) || [])
+    rows += (payload.content.match(/^\d\s+PLA\s+≈\d+%\s+⬛ Black/gm) || [])
       .length;
     assert.deepEqual(payload.allowedMentions, {
       parse: [],
@@ -424,14 +424,14 @@ test("unknown target, too many arguments, empty config and invalid config give a
   const { handle, calls, service } = setup();
   const unknown = message("!3d status missing");
   await handle(unknown);
-  assert.match(unknown.replies[0].content, /hittades/);
+  assert.match(unknown.replies[0].content, /No printer or group/);
   const many = message("!3d status bambu voron");
   await handle(many);
-  assert.match(many.replies[0].content, /Ange ett/);
+  assert.match(many.replies[0].content, /Enter a printer ID/);
   service.load = async () => ({ printers: {}, groups: {} });
   const empty = message("!3d status all");
   await handle(empty);
-  assert.match(empty.replies[0].content, /Inga aktiva/);
+  assert.match(empty.replies[0].content, /No enabled/);
   service.load = async () => {
     throw new Error("secret invalid JSON");
   };
@@ -446,7 +446,7 @@ test("cooldown prevents duplicate queries", async () => {
   await handle(message("!3d status bambu"));
   const msg = message("!3d status bambu");
   await handle(msg);
-  assert.match(msg.replies[0].content, /Vänta/);
+  assert.match(msg.replies[0].content, /Wait/);
   assert.equal(calls.length, 1);
 });
 
@@ -467,7 +467,7 @@ test("removed printer configuration commands return help without loading configu
       const msg = message(content, author);
       await handle(msg);
       assert.equal(msg.replies.length, 1);
-      assert.match(msg.replies[0].content, /Okänt skrivarkommando.*!3d help/);
+      assert.match(msg.replies[0].content, /Unknown printer command.*!3d help/);
       assert.doesNotMatch(
         msg.replies[0].content,
         /secret-host|secret-password/,
@@ -500,7 +500,7 @@ test("printer and brand tables preserve groups, disabled printers and supported 
   const list = message("!3d printers");
   await handle(list);
   const text = list.replies.map((reply) => reply.content).join("\n");
-  assert.match(text, /printer_with_underscore.*avstängd/);
+  assert.match(text, /printer_with_underscore.*disabled/);
   assert.match(text, /^farm\s+bambu, voron$/m);
   assert.equal(calls.length, 0);
 });

@@ -77,25 +77,25 @@ test("multiple AMS units preserve tray materials, colors, unknown values and zer
   assert.equal(status.ams[1].trays[0].remainingPercentage, 0);
   assert.equal(status.ams[1].trays[1].remainingPercentage, null);
   const text = formatAMS("bambu", status);
-  assert.match(text, /```text\nAMS 0\nFack\s+Filament\s+Kvar\s+Färg/);
+  assert.match(text, /```text\nAMS 0\nSlot\s+Filament\s+Remaining\s+Color/);
   assert.match(text, /```text\nAMS 1\n/);
-  assert.match(text, /PLA\s+≈65%\s+🟥 Röd/);
-  assert.match(text, /ABS\s+≈0%\s+\? Okänd/);
-  assert.match(text, /PETG\s+Okänt/);
+  assert.match(text, /PLA\s+≈65%\s+🟥 Red/);
+  assert.match(text, /ABS\s+≈0%\s+\? Unknown/);
+  assert.match(text, /PETG\s+Unknown/);
   assert.equal((text.match(/^```/gm) || []).length, 4);
 });
 
 test("unreported AMS is different from no attached AMS", () => {
   assert.match(
     formatAMS("bambu", parseBambu({ print: { gcode_state: "IDLE" } })),
-    /rapporterades inte/,
+    /did not report/,
   );
   assert.match(
     formatAMS(
       "bambu",
       parseBambu({ print: { gcode_state: "IDLE", ams: { ams: [] } } }),
     ),
-    /Inga AMS/,
+    /No AMS/,
   );
 });
 
@@ -115,7 +115,7 @@ test("AMS presence bits hide stale filament metadata for physically empty slots"
   assert.equal(value.ams[0].trays[0].present, false);
   assert.equal(value.ams[0].trays[0].material, null);
   assert.equal(value.ams[1].trays[0].present, true);
-  assert.match(formatAMS("bambu", value), /0\s+Tomt\s+–\s+–/);
+  assert.match(formatAMS("bambu", value), /0\s+Empty\s+–\s+–/);
 });
 
 test("Bambu partial updates merge AMS units and trays by ID, with empty arrays clearing", () => {
@@ -170,7 +170,7 @@ test("Moonraker reports real progress and labels its calculated remaining-time e
   });
   assert.equal(status.percentage, 25);
   assert.equal(status.remainingSeconds, 5400);
-  assert.match(formatStatus("voron", status), /uppskattning från framsteg/);
+  assert.match(formatStatus("voron", status), /estimated from progress/);
 });
 
 test("Moonraker startup, zero progress, job errors and shutdown messages", () => {
@@ -256,14 +256,14 @@ test("malformed reports fail rather than fabricate printer state", () => {
 
 test("zero time is known; paused unknown telemetry and printer messages are safe", () => {
   assert.equal(duration(0), "0 min");
-  assert.equal(duration(null), "okänd");
+  assert.equal(duration(null), "unknown");
   assert.match(
     formatStatus("v1", {
       state: "paused",
       percentage: null,
       remainingSeconds: null,
     }),
-    /Pausad[\s\S]*okänd procent[\s\S]*okänd/,
+    /Paused[\s\S]*unknown progress[\s\S]*unknown/,
   );
   const text = formatStatus("v1", {
     state: "error",

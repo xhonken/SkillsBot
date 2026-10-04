@@ -1,6 +1,6 @@
 # 3D Printer Skill: Setup and Use
 
-Complete [main-bot installation](../docs/GETTING_STARTED.md) first. Confirm `!info` works. This guide adds printer monitoring; it does not change the bot's owners, token, or Discord channel settings.
+Start with the [complete installation guide](../docs/GETTING_STARTED.md) for download, Discord token, owners, and your first printer. This page is the detailed printer reference after the main bot works. Confirm `!info` works. This guide adds printer monitoring; it does not change the bot's owners, token, or Discord channel settings.
 
 The module ID is **`3dprinter`**, its commands start with **`!3d`**, and its device settings live in **`printers.json`**. The skill is disabled by default.
 
@@ -30,17 +30,17 @@ npm run printer:add -- --id bambu1
 
 `bambu1` is the printer's **command ID**. Choose a different ID for each printer, using up to 48 lowercase letters/numbers, hyphens, or underscores, starting with a letter or number. It must not be `all` or an existing group ID. Its friendly display name can contain spaces, but Discord commands use the command ID.
 
-The wizard currently asks questions in Swedish:
+Follow these English terminal prompts:
 
-| Prompt                                                | What you enter                                                            |
-| ----------------------------------------------------- | ------------------------------------------------------------------------- |
-| `Skrivarens IP-adress`                                | This printer's IP address.                                                |
-| `Serienummer` (only if discovery fails)               | This printer's serial number.                                             |
-| `Skrivarnamn` (only if the name cannot be discovered) | A friendly name, for example `Office Printer`.                            |
-| `LAN-kod (dold inmatning)`                            | The LAN access code. Input is hidden; paste it and press Enter.           |
-| `Grupp`                                               | Press Enter for a standalone printer, or enter a group ID such as `farm`. |
+| Prompt                                                 | What you enter                                                            |
+| ------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `Printer IP address`                                   | This printer's IP address.                                                |
+| `Serial number` (only if discovery fails)              | This printer's serial number.                                             |
+| `Printer name` (only if the name cannot be discovered) | A friendly name, for example `Office Printer`.                            |
+| `LAN access code (hidden input)`                       | The LAN access code. Input is hidden; paste it and press Enter.           |
+| `Group`                                                | Press Enter for a standalone printer, or enter a group ID such as `farm`. |
 
-The wizard checks the connection and fetches model, firmware, and reported AMS units. Wait for **`Sparad:`**. It saves the device in `printers.json`, the LAN code in `.env`, and a private backup under `.backups/`. Buffers and exhaust fans are not stored.
+The wizard checks the connection and fetches model, firmware, and reported AMS units. Wait for **`Saved:`**. It saves the device in `printers.json`, the LAN code in `.env`, and a private backup under `.backups/`. Buffers and exhaust fans are not stored.
 
 If connection checks fail, correct the reported problem and rerun the wizard. Do not type LAN codes in Discord. Re-adding the same serial updates its existing entry; normally omit `--id` when updating so its ID is retained.
 
@@ -71,7 +71,7 @@ Expect `Selected skills: 3dprinter.` (or your combined list). Start again with `
 
 ## 4. Check Status and AMS in Discord
 
-Send these in an allowed server text channel:
+Send these one at a time in an allowed server text channel. Wait at least five seconds between printer listing, status, and AMS commands:
 
 ```text
 !3d printers
@@ -84,7 +84,7 @@ Send these in an allowed server text channel:
 
 Status shows progress and estimated time remaining during a print, an idle message when no job is running, or the reported error/status when available. A failed connection means status could not be fetched; it is different from an idle printer. Error/HMS codes may be shown without a text description.
 
-AMS output lists each reported unit and slot, filament type, a basic color square/name, and estimated remaining percentage when supplied by the printer. Multiple AMS units need no separate manual configuration. `Okänt` means an estimate is unavailable; colored squares approximate the base color, and spool percentages are estimates.
+AMS output lists each reported unit and slot, filament type, a basic color square/name, and estimated remaining percentage when supplied by the printer. Multiple AMS units need no separate manual configuration. `Unknown` means an estimate is unavailable; colored squares approximate the base color, and spool percentages are estimates.
 
 Read-only printer commands are available to everyone in permitted channels by default. To restrict status to selected users, add a `3d.status` user-ID list under `permissions` in `config.json` and restart. Owners always retain access.
 

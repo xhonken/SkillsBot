@@ -46,16 +46,16 @@ test("filament colors accept RGB and RGBA and reject arbitrary values", () => {
 });
 
 test("text colors group shades under basic symbols and preserve unknown or transparent telemetry", () => {
-  assert.equal(describeFilamentColor("000000FF"), "⬛ Svart");
-  assert.equal(describeFilamentColor("FFFFFFFF"), "⬜ Vit");
-  assert.equal(describeFilamentColor("A6A9AAFF"), "◻ Grå");
+  assert.equal(describeFilamentColor("000000FF"), "⬛ Black");
+  assert.equal(describeFilamentColor("FFFFFFFF"), "⬜ White");
+  assert.equal(describeFilamentColor("A6A9AAFF"), "◻ Gray");
   assert.equal(describeFilamentColor("F7E6DEFF"), "⬜ Beige");
-  assert.equal(describeFilamentColor("C12E1FFF"), "🟥 Röd");
-  assert.equal(describeFilamentColor("9B111EFF"), "🟥 Röd");
-  assert.equal(describeFilamentColor("001489FF"), "🟦 Blå");
-  assert.equal(describeFilamentColor(null), "? Okänd");
+  assert.equal(describeFilamentColor("C12E1FFF"), "🟥 Red");
+  assert.equal(describeFilamentColor("9B111EFF"), "🟥 Red");
+  assert.equal(describeFilamentColor("001489FF"), "🟦 Blue");
+  assert.equal(describeFilamentColor(null), "? Unknown");
   assert.equal(describeFilamentColor("FF000000"), "▫ Transparent");
-  assert.match(describeFilamentColor("FF000080"), /Röd \(transparent\)/);
+  assert.match(describeFilamentColor("FF000080"), /Red \(transparent\)/);
 });
 
 test("encoded PNG preserves reported colors across both AMS units, including black and white", () => {

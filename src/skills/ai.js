@@ -7,17 +7,17 @@ import { createAIService, aiErrorMessage } from "../ai/service.js";
 const commands = [
   {
     command: "!ai help",
-    description: "Visa AI-skillens kommandon.",
+    description: "Show AI-skill commands.",
     permission: "ai.help",
   },
   {
     command: "!ai info",
-    description: "Visa vald AI-profil, leverantör och modell.",
+    description: "Show the selected AI profile, provider, and model.",
     permission: "ai.info",
   },
   {
-    command: "!ai q <fråga>",
-    description: "Ställ en fråga till den valda AI-modellen.",
+    command: "!ai q <question>",
+    description: "Ask the selected AI model a question.",
     permission: "ai.q",
   },
 ];
@@ -46,16 +46,16 @@ export function registerAISkill(
       if (!["info", "q"].includes(command)) {
         await send(
           message,
-          "Okänt AI-kommando. Använd !ai help för att se kommandona.",
+          "Unknown AI command. Use !ai help to see the commands.",
         );
         return;
       }
       if (!hasPermission(message.author.id, `ai.${command}`, config)) {
-        await send(message, "Du har inte behörighet att använda kommandot.");
+        await send(message, "You do not have permission to use this command.");
         return;
       }
       if (command === "info" && args.length) {
-        await send(message, "Använd !ai info utan extra argument.");
+        await send(message, "Use !ai info without extra arguments.");
         return;
       }
       const question =
@@ -68,7 +68,7 @@ export function registerAISkill(
       if (command === "q" && !question) {
         await send(
           message,
-          "Använd !ai q <fråga>, till exempel !ai q Hur fungerar en 3D-skrivare?",
+          "Use !ai q <question>, for example !ai q How does a 3D printer work?",
         );
         return;
       }
@@ -81,26 +81,26 @@ export function registerAISkill(
           codeBox(
             "AI – information",
             fields([
-              ["Profil", settings.active || "Ingen vald"],
-              ["Leverantör", profile ? PROVIDERS[profile.provider] : "–"],
-              ["Modell", profile?.model || "Ingen vald"],
+              ["Profile", settings.active || "None selected"],
+              ["Provider", profile ? PROVIDERS[profile.provider] : "–"],
+              ["Model", profile?.model || "None selected"],
               [
-                "Åtkomst",
+                "Access",
                 profile?.apiKeyEnv
                   ? apiKey
-                    ? "API-nyckel finns"
-                    : "API-nyckel saknas"
+                    ? "API key present"
+                    : "API key missing"
                   : profile
-                    ? "Utan API-nyckel"
+                    ? "No API key required"
                     : "–",
               ],
               [
                 "Status",
                 !profile
-                  ? "Välj en profil i ai.json."
+                  ? "Select a profile in ai.json."
                   : profile.apiKeyEnv && !apiKey
-                    ? "Lägg AI-nyckeln i .env."
-                    : "Konfigurerad; anslutning kontrolleras vid en fråga.",
+                    ? "Add the AI API key to .env."
+                    : "Configured; connection is checked when you ask a question.",
               ],
             ]),
           ),
@@ -110,21 +110,21 @@ export function registerAISkill(
       if (!profile) {
         await send(
           message,
-          "Ingen AI är vald. Välj active i ai.json lokalt; se howto/AI.md.",
+          "No AI is selected. Set active in ai.json locally; see howto/AI.md.",
         );
         return;
       }
       if (profile.apiKeyEnv && !apiKey) {
         await send(
           message,
-          "AI-profilens API-nyckel saknas. Lägg den i .env lokalt; se howto/AI.md.",
+          "The AI profile's API key is missing. Add it to .env locally; see howto/AI.md.",
         );
         return;
       }
       if (question.length > settings.maxQuestionChars) {
         await send(
           message,
-          `Frågan är för lång. Använd högst ${settings.maxQuestionChars} tecken.`,
+          `The question is too long. Use at most ${settings.maxQuestionChars} characters.`,
         );
         return;
       }
@@ -135,18 +135,18 @@ export function registerAISkill(
       if (pending.has(userId)) {
         await send(
           message,
-          "Din förra AI-fråga behandlas fortfarande. Vänta på svaret.",
+          "Your previous AI question is still processing. Wait for its answer.",
         );
         return;
       }
       if (cooldowns.has(userId)) {
-        await send(message, "Vänta några sekunder innan nästa AI-fråga.");
+        await send(message, "Wait a few seconds before the next AI question.");
         return;
       }
       if (pending.size >= settings.maxConcurrent) {
         await send(
           message,
-          "AI:n arbetar med andra frågor just nu. Försök igen strax.",
+          "The AI is processing other questions. Try again shortly.",
         );
         return;
       }
@@ -157,10 +157,10 @@ export function registerAISkill(
         await send(
           message,
           codeBox(
-            "AI – arbetar",
+            "AI – working",
             fields([
-              ["Modell", profile.model],
-              ["Status", "Dröj kvar, svaret kommer strax."],
+              ["Model", profile.model],
+              ["Status", "Please wait; the answer will arrive shortly."],
             ]),
           ),
         );
@@ -174,23 +174,23 @@ export function registerAISkill(
         const notes = [
           ...(result.truncated
             ? [
-                "Svaret har kortats för Discord. Minska omfattningen på frågan för ett kortare svar.",
+                "The answer was shortened for Discord. Narrow your question for a shorter answer.",
               ]
             : []),
           ...(result.incomplete
             ? [
-                "Modellens svar nådde sin tokengräns. Öka maxOutputTokens i ai.json vid behov.",
+                "The model response reached its token limit. Increase maxOutputTokens in ai.json if needed.",
               ]
             : []),
         ];
         await send(
           message,
           codeBox(
-            "AI – svar",
+            "AI – answer",
             [
               fields([
-                ["Modell", result.model || profile.model],
-                ["Tid", `${elapsed} s`],
+                ["Model", result.model || profile.model],
+                ["Time", `${elapsed} s`],
               ]),
               "",
               codeText(result.answer),
@@ -200,14 +200,14 @@ export function registerAISkill(
         );
       } catch (error) {
         if (active)
-          await send(message, codeBox("AI – fel", aiErrorMessage(error)));
+          await send(message, codeBox("AI – error", aiErrorMessage(error)));
       } finally {
         pending.delete(userId);
       }
     } catch (error) {
       try {
         if (active)
-          await send(message, codeBox("AI – fel", aiErrorMessage(error)));
+          await send(message, codeBox("AI – error", aiErrorMessage(error)));
       } catch {
         console.error("AI command could not send a Discord reply.");
       }

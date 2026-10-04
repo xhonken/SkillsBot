@@ -21,7 +21,7 @@ export async function discoverSkills() {
     const name = basename(file.name, extname(file.name));
     if (!/^[a-z0-9][a-z0-9_-]*$/.test(name)) continue;
     if (available.has(name))
-      throw new SkillError(`Flera moduler har namnet ${name}.`);
+      throw new SkillError(`Multiple modules have the name ${name}.`);
     available.set(name, new URL(file.name, directory));
   }
   return available;
@@ -71,18 +71,18 @@ export class SkillManager {
     if (this.client.skills.has(name)) return false;
     const available = await this.discover();
     if (!available.has(name))
-      throw new SkillError(`Skill ${name} finns inte i src/skills/.`);
+      throw new SkillError(`Skill ${name} is not present in src/skills/.`);
     let skill;
     try {
       ({ default: skill } = await this.load(available.get(name)));
     } catch {
       throw new SkillError(
-        `Skill ${name} kunde inte importeras; kontrollera modulens kod och beroenden.`,
+        `Skill ${name} could not be imported; check its code and dependencies.`,
       );
     }
     if (skill?.name !== name || typeof skill.register !== "function")
       throw new SkillError(
-        `Skill ${name} måste exportera samma name som filnamnet och en register-funktion.`,
+        `Skill ${name} must export a matching name and a register function.`,
       );
     if (
       skill.commands !== undefined &&
@@ -107,7 +107,7 @@ export class SkillManager {
         ))
     )
       throw new SkillError(
-        `Skill ${name} har ogiltig kommandohjälp. commands måste vara en lista med command och description på en rad.`,
+        `Skill ${name} has invalid command help. commands must be a list with single-line command and description values.`,
       );
     const namespace = skillNamespace(skill);
     if (
@@ -116,7 +116,7 @@ export class SkillManager {
       CORE_NAMESPACES.includes(namespace)
     )
       throw new SkillError(
-        `Skill ${name} har ett reserverat eller ogiltigt kommandoprefix.`,
+        `Skill ${name} has a reserved or invalid command prefix.`,
       );
     if (
       [...this.client.skills.values()].some(
@@ -124,7 +124,7 @@ export class SkillManager {
       )
     )
       throw new SkillError(
-        `Kommandoprefixet !${namespace} används redan av en laddad skill.`,
+        `Command prefix !${namespace} is already used by a loaded skill.`,
       );
     if (
       skill.commands?.some(
@@ -133,7 +133,7 @@ export class SkillManager {
       )
     )
       throw new SkillError(
-        `Skill ${name}: alla kommandon måste börja med !${namespace}.`,
+        `Skill ${name}: all commands must start with !${namespace}.`,
       );
     if (
       skill.commands?.some(
@@ -143,7 +143,7 @@ export class SkillManager {
       )
     )
       throw new SkillError(
-        `Skill ${name}: behörighetsnycklar måste börja med ${namespace}.`,
+        `Skill ${name}: permission keys must start with ${namespace}.`,
       );
     const before = snapshot(this.client);
     let cleanup;
@@ -160,14 +160,14 @@ export class SkillManager {
             : null;
       if (!cleanup)
         throw new SkillError(
-          `Skill ${name} måste returnera en cleanup-funktion eller ha unregister(client).`,
+          `Skill ${name} must return a cleanup function or provide unregister(client).`,
         );
     } catch (error) {
       for (const [event, listener] of addedListeners(this.client, before))
         this.client.off(event, listener);
       throw error instanceof SkillError
         ? error
-        : new SkillError(`Skill ${name} kunde inte registreras.`);
+        : new SkillError(`Skill ${name} could not be registered.`);
     }
     const listeners = addedListeners(this.client, before).map(
       ([event, listener]) => {
@@ -224,7 +224,7 @@ export function registerSkillListing(client, config, manager) {
         .sort()
         .map((name) => [
           name,
-          client.skills.has(name) ? "aktiv" : "avstängd",
+          client.skills.has(name) ? "enabled" : "disabled",
           client.skills.has(name)
             ? `!${skillNamespace(client.skills.get(name))}`
             : "—",
@@ -243,21 +243,21 @@ export function registerSkillListing(client, config, manager) {
                   ],
                   rows,
                 )
-              : "Inga skill-moduler hittades.",
+              : "No skill modules were found.",
             "",
             fields([
-              ["Konfiguration", "Ändra skills-listan manuellt i config.json."],
-              ["Omstart", "Starta om boten för att tillämpa ändringen."],
+              [
+                "Configuration",
+                "Edit the skills list manually in config.json.",
+              ],
+              ["Restart", "Restart the bot to apply changes."],
             ]),
           ].join("\n"),
         ),
       );
     } catch {
       try {
-        await reply(
-          message,
-          "Kunde inte lista skills. Kontrollera src/skills/.",
-        );
+        await reply(message, "Could not list skills. Check src/skills/.");
       } catch {
         console.error("Could not send skill listing to Discord.");
       }

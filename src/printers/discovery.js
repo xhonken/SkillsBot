@@ -44,7 +44,7 @@ export async function discoverBambu(
     ({ address } = await lookup(host, { family: 4 }));
   } catch {
     throw new StatusError(
-      "Skrivarens IP-adress eller värdnamn kunde inte hittas.",
+      "The printer IP address or hostname could not be found.",
     );
   }
   return new Promise((resolve, reject) => {
@@ -68,7 +68,7 @@ export async function discoverBambu(
         finish(
           null,
           new StatusError(
-            "IP-adressen tillhör en skrivare med ett annat serienummer.",
+            "The IP address belongs to a printer with a different serial number.",
           ),
         );
       else finish(found);

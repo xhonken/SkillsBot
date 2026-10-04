@@ -184,7 +184,7 @@ test("local OpenAI-compatible requests use no key and only return final content"
       choices: [
         {
           message: {
-            content: "Ett lokalt svar.",
+            content: "A local answer.",
             reasoning_content: "private-reasoning",
           },
           finish_reason: "stop",
@@ -192,14 +192,20 @@ test("local OpenAI-compatible requests use no key and only return final content"
       ],
     }),
   );
-  const result = await requestAI(state(mock.baseUrl), "En fråga\n  med indrag");
-  assert.equal(result.answer, "Ett lokalt svar.");
+  const result = await requestAI(
+    state(mock.baseUrl),
+    "A question\n  with indentation",
+  );
+  assert.equal(result.answer, "A local answer.");
   assert.equal(result.model, "actual-gpt-oss");
   const request = mock.requests[0];
   assert.equal(request.url, "/v1/chat/completions");
   assert.equal(request.method, "POST");
   assert.equal(request.headers.authorization, undefined);
-  assert.equal(request.body.messages[1].content, "En fråga\n  med indrag");
+  assert.equal(
+    request.body.messages[1].content,
+    "A question\n  with indentation",
+  );
   assert.equal(request.body.stream, false);
   assert.equal(request.body.max_tokens, 4096);
 });
@@ -405,7 +411,8 @@ test("AI timeout covers both waiting for headers and stalled response bodies", a
       }
     });
     const selected = state(mock.baseUrl);
-    selected.settings.timeoutMs = 50;
+    // Allow a cold local connection to reach the server before testing expiry.
+    selected.settings.timeoutMs = 500;
     await assert.rejects(requestAI(selected, "Q"), { code: "timeout" });
     assert.equal(mock.requests.length, 1);
   }

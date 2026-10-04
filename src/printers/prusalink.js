@@ -3,7 +3,7 @@ import { StatusError, percentage, seconds, state, status } from "./status.js";
 
 export function parsePrusalink(data) {
   if (typeof data.printer?.state !== "string")
-    throw new StatusError("PrusaLink saknar skrivarstatus.");
+    throw new StatusError("PrusaLink is missing printer status.");
   const printerState = state(data.printer.state);
   const messages = [data.printer.status_printer, data.printer.status_connect]
     .filter((item) => item?.ok === false && item.message)
@@ -17,7 +17,7 @@ export function parsePrusalink(data) {
     error:
       messages.join("; ") ||
       (["error", "attention"].includes(printerState)
-        ? "PrusaLink rapporterar ett fel utan feltext."
+        ? "PrusaLink reports an error without a message."
         : null),
   });
 }

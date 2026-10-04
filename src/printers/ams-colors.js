@@ -14,12 +14,14 @@ const FONT = {
   8: [14, 17, 17, 14, 17, 17, 14],
   9: [14, 17, 17, 15, 1, 1, 14],
   A: [14, 17, 17, 31, 17, 17, 17],
+  E: [31, 16, 16, 30, 16, 16, 31],
   L: [16, 16, 16, 16, 16, 16, 31],
   M: [17, 27, 21, 21, 17, 17, 17],
   O: [14, 17, 17, 17, 17, 17, 14],
   P: [30, 17, 17, 30, 16, 16, 16],
   S: [15, 16, 16, 14, 1, 1, 30],
   T: [31, 4, 4, 4, 4, 4, 4],
+  Y: [17, 17, 10, 4, 4, 4, 4],
   "-": [0, 0, 0, 31, 0, 0, 0],
   "?": [14, 17, 1, 2, 4, 0, 4],
   " ": [0, 0, 0, 0, 0, 0, 0],
@@ -38,16 +40,16 @@ export function parseFilamentColor(value) {
 
 export function describeFilamentColor(value) {
   const color = parseFilamentColor(value);
-  if (!color) return "? Okänd";
+  if (!color) return "? Unknown";
   const [r, g, b, alpha] = color;
   if (alpha < 32) return "▫ Transparent";
   const high = Math.max(r, g, b);
   const low = Math.min(r, g, b);
   const delta = high - low;
   let description;
-  if (high < 56) description = "⬛ Svart";
-  else if (low > 224 && delta < 25) description = "⬜ Vit";
-  else if (delta < high * 0.07) description = "◻ Grå";
+  if (high < 56) description = "⬛ Black";
+  else if (low > 224 && delta < 25) description = "⬜ White";
+  else if (delta < high * 0.07) description = "◻ Gray";
   else {
     let hue =
       high === r
@@ -59,15 +61,16 @@ export function describeFilamentColor(value) {
     const lightness = (high + low) / 510;
     // Group shades under a basic color symbol while retaining useful names.
     if (hue >= 15 && hue < 65 && lightness > 0.78) description = "⬜ Beige";
-    else if (hue >= 15 && hue < 55 && lightness < 0.45) description = "🟫 Brun";
-    else if (hue < 15 || hue >= 345) description = "🟥 Röd";
+    else if (hue >= 15 && hue < 55 && lightness < 0.45)
+      description = "🟫 Brown";
+    else if (hue < 15 || hue >= 345) description = "🟥 Red";
     else if (hue < 45) description = "🟧 Orange";
-    else if (hue < 70) description = "🟨 Gul";
-    else if (hue < 165) description = "🟩 Grön";
-    else if (hue < 195) description = "🟦 Turkos";
-    else if (hue < 255) description = "🟦 Blå";
-    else if (hue < 290) description = "🟪 Lila";
-    else description = "🟪 Rosa";
+    else if (hue < 70) description = "🟨 Yellow";
+    else if (hue < 165) description = "🟩 Green";
+    else if (hue < 195) description = "🟦 Turquoise";
+    else if (hue < 255) description = "🟦 Blue";
+    else if (hue < 290) description = "🟪 Purple";
+    else description = "🟪 Pink";
   }
   return description + (alpha < 255 ? " (transparent)" : "");
 }
@@ -144,8 +147,8 @@ export function renderAMSColors(status) {
         }
       }
       if (!color)
-        label(png, tray.present === false ? "TOM" : "?", x + 34, y + 24, 3);
-      label(png, `PLATS ${String(tray.id).slice(0, 3)}`, x + 10, y + 74, 2);
+        label(png, tray.present === false ? "EMPTY" : "?", x + 34, y + 24, 3);
+      label(png, `SLOT ${String(tray.id).slice(0, 3)}`, x + 10, y + 74, 2);
     }
   }
   return PNG.sync.write(png, { colorType: 2, deflateLevel: 6 });
@@ -161,6 +164,6 @@ export function amsColorAttachment(id, name, status) {
   return {
     attachment: image,
     name: `ams-colors-${filename}.png`,
-    description: `Filamentfärger för ${safeText(name)}, ordnade efter AMS-ID och plats. TOM markerar en tom plats och ? en okänd färg. Schackmönster visar rapporterad genomskinlighet.`,
+    description: `Filament colors for ${safeText(name)}, ordered by AMS ID and slot. EMPTY marks an empty slot and ? an unknown color. The checkerboard indicates reported transparency.`,
   };
 }

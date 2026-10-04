@@ -5,38 +5,38 @@ import { parseSkillCommand, skillNamespace } from "./commands.js";
 const MAIN_COMMANDS = [
   {
     command: "!help [skill]",
-    description: "Visa huvudbotens och laddade skills kommandon.",
+    description: "Show main-bot and loaded-skill commands.",
     permission: "help",
   },
   {
     command: "!info",
-    description: "Visa botens version och laddade skills.",
+    description: "Show the bot version and loaded skills.",
     ownerOnly: true,
   },
   {
     command: "!skills",
-    description: "Lista tillgängliga skills och vilka som är aktiva.",
+    description: "List available skills and their current status.",
     ownerOnly: true,
   },
 ];
 
 function commandList(entries, userId, config) {
   const width = Math.max(
-    "Kommando".length,
+    "Command".length,
     ...entries.map((entry) => entry.command.length),
   );
   const lines = [
-    `${"Kommando".padEnd(width)}  Åtkomst`,
+    `${"Command".padEnd(width)}  Access`,
     `${"─".repeat(width)}  ${"─".repeat(17)}`,
   ];
   for (const entry of entries) {
     const access = entry.ownerOnly
-      ? "endast ägare"
+      ? "owners only"
       : entry.permission
         ? hasPermission(userId, entry.permission, config)
-          ? "tillåtet"
-          : "kräver behörighet"
-        : "alla";
+          ? "allowed"
+          : "permission required"
+        : "everyone";
     lines.push(
       `${codeText(entry.command).padEnd(width)}  ${access}`,
       ...wrapText(entry.description, 62).map((line) => `  ${line}`),
@@ -79,13 +79,13 @@ export function registerHelp(client, config) {
             config,
           ))
       ) {
-        await reply(message, "Du har inte behörighet att använda kommandot.");
+        await reply(message, "You do not have permission to use this command.");
         return;
       }
       if (mainHelp && args.length && !selected) {
         await reply(
           message,
-          "Ingen laddad skill med det namnet. Använd !help för att se tillgängliga kommandon.",
+          "No loaded skill has that name. Use !help to see available commands.",
         );
         return;
       }
@@ -99,21 +99,21 @@ export function registerHelp(client, config) {
             )
           : codeBox(
               `Skill: ${skill.name} (!${skillNamespace(skill)})`,
-              "Denna skill har ingen registrerad kommandohjälp.",
+              "This skill has no registered command help.",
             );
       if (selected) {
         await reply(message, skillHelp(selected));
         return;
       }
       const lines = [
-        "**SkillsBot – kommandon**",
-        section("Huvudbot", MAIN_COMMANDS),
+        "**SkillsBot – commands**",
+        section("Main bot", MAIN_COMMANDS),
       ];
       for (const skill of client.skills.values()) {
         lines.push(skillHelp(skill));
       }
       if (!client.skills.size)
-        lines.push(codeBox("Skills", "Inga skills är laddade."));
+        lines.push(codeBox("Skills", "No skills are loaded."));
       await reply(message, lines.join("\n\n"));
     } catch {
       console.error("Could not send bot help to Discord.");
@@ -137,7 +137,7 @@ export function registerInfo(client, config, version) {
           "SkillsBot",
           fields([
             ["Version", `v${version}`],
-            ["Laddade skills", names.join(", ") || "(inga)"],
+            ["Loaded skills", names.join(", ") || "(none)"],
           ]),
         ),
       );

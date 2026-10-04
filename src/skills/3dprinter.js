@@ -17,28 +17,28 @@ const namespace = "3d";
 const commands = [
   {
     command: "!3d help",
-    description: "Visa skrivarskillens kommandon.",
+    description: "Show printer-skill commands.",
     permission: "3d.help",
   },
   {
-    command: "!3d status <skrivare|grupp|all>",
-    description: "Visa utskriftsstatus, framsteg, tid kvar och fel.",
+    command: "!3d status <printer|group|all>",
+    description: "Show print status, progress, time remaining, and errors.",
     permission: "3d.status",
   },
   {
-    command: "!3d ams <skrivare|grupp|all>",
-    description: "Visa AMS-fack, filament, färger och mängd kvar.",
+    command: "!3d ams <printer|group|all>",
+    description: "Show AMS slots, filament, colors, and remaining amount.",
     permission: "3d.ams",
   },
   {
-    command: "!3d printers [skrivare|grupp|all]",
+    command: "!3d printers [printer|group|all]",
     description:
-      "Lista skrivare och grupper, eller visa en vald skrivares uppgifter.",
+      "List printers and groups, or show a selected printer's details.",
     permission: "3d.printers",
   },
   {
     command: "!3d brands",
-    description: "Lista skrivarmärken och anslutningar.",
+    description: "List printer brands and connections.",
     permission: "3d.brands",
   },
 ];
@@ -60,14 +60,14 @@ export function registerPrinterSkill(
       if (!["status", "ams", "printers", "brands"].includes(command)) {
         await reply(
           message,
-          "Okänt skrivarkommando. Använd !3d help för att se kommandona.",
+          "Unknown printer command. Use !3d help to see the commands.",
         );
         return;
       }
       if (
         !hasPermission(message.author.id, `${namespace}.${command}`, config)
       ) {
-        await reply(message, "Du har inte behörighet att använda kommandot.");
+        await reply(message, "You do not have permission to use this command.");
         return;
       }
       if (command === "brands") {
@@ -75,19 +75,19 @@ export function registerPrinterSkill(
           message,
           [
             codeBox(
-              "Märken",
+              "Brands",
               table(
                 [
                   { label: "ID", maxWidth: 16 },
-                  { label: "Märke", maxWidth: 24 },
+                  { label: "Brand", maxWidth: 24 },
                 ],
                 Object.entries(BRANDS),
               ),
             ),
             codeBox(
-              "Anslutningar",
+              "Connections",
               table(
-                [{ label: "Protokoll" }, { label: "API" }],
+                [{ label: "Protocol" }, { label: "API" }],
                 [
                   ["bambu", "Bambu MQTT"],
                   ["moonraker", "Moonraker"],
@@ -97,7 +97,7 @@ export function registerPrinterSkill(
               ) +
                 "\n\n" +
                 wrapText(
-                  "Modellen måste ha ett av dessa API:er; märkesnamnet räcker inte. Voron är ett byggprojekt.",
+                  "The model must expose one of these APIs; the brand name alone is insufficient. Voron is a community build project.",
                 ).join("\n"),
             ),
           ].join("\n\n"),
@@ -109,7 +109,10 @@ export function registerPrinterSkill(
         if (expires <= now) requests.delete(key);
       const requestKey = `${message.guildId}:${message.author.id}`;
       if (requests.has(requestKey)) {
-        await reply(message, "Vänta några sekunder innan nästa skrivarfråga.");
+        await reply(
+          message,
+          "Wait a few seconds before the next printer query.",
+        );
         return;
       }
       requests.set(requestKey, now + cooldownMs);
@@ -119,7 +122,7 @@ export function registerPrinterSkill(
       } catch {
         await reply(
           message,
-          "Skrivarkonfigurationen kunde inte läsas. Kontrollera `printers.json` med `npm run check`.",
+          "Printer configuration could not be read. Check `printers.json` with `npm run check`.",
         );
         return;
       }
@@ -127,7 +130,7 @@ export function registerPrinterSkill(
         if (args.length > 1) {
           await reply(
             message,
-            "Använd !3d printers <skrivare|grupp|all> eller !3d printers för hela listan.",
+            "Use !3d printers <printer|group|all> or !3d printers for the full list.",
           );
           return;
         }
@@ -139,7 +142,7 @@ export function registerPrinterSkill(
         if (target !== "all" && !names.length) {
           await reply(
             message,
-            "Ingen skrivare eller grupp med det namnet hittades. Använd !3d printers för att se giltiga ID:n.",
+            "No printer or group has that name. Use !3d printers to see valid IDs.",
           );
           return;
         }
@@ -150,7 +153,7 @@ export function registerPrinterSkill(
             p.displayName || id,
             BRANDS[p.brand],
             p.protocol,
-            p.enabled === false ? "avstängd" : "aktiv",
+            p.enabled === false ? "disabled" : "enabled",
           ];
         });
         const groups = Object.entries(printers.groups)
@@ -163,47 +166,47 @@ export function registerPrinterSkill(
           message,
           [
             codeBox(
-              "Skrivare",
+              "Printers",
               rows.length
                 ? table(
                     [
                       { label: "ID", maxWidth: 48 },
-                      { label: "Namn", maxWidth: 24 },
-                      { label: "Märke", maxWidth: 16 },
-                      { label: "Anslutning" },
+                      { label: "Name", maxWidth: 24 },
+                      { label: "Brand", maxWidth: 16 },
+                      { label: "Connection" },
                       { label: "Status" },
                     ],
                     rows,
                   )
-                : "Inga skrivare är konfigurerade ännu.",
+                : "No printers are configured yet.",
             ),
             codeBox(
-              "Grupper",
+              "Groups",
               groups.length
                 ? table(
                     [
-                      { label: "Grupp", maxWidth: 48 },
-                      { label: "Skrivare", maxWidth: 48 },
+                      { label: "Group", maxWidth: 48 },
+                      { label: "Printers", maxWidth: 48 },
                     ],
                     groups,
                   )
-                : "Inga grupper för de valda skrivarna.",
+                : "No groups for the selected printers.",
             ),
             ...(Object.hasOwn(printers.printers, target)
               ? [
                   codeBox(
-                    "Skrivaruppgifter",
+                    "Printer details",
                     fields([
-                      ["Modell", printers.printers[target].model || "Okänd"],
+                      ["Model", printers.printers[target].model || "Unknown"],
                       [
                         "Firmware",
-                        printers.printers[target].firmwareVersion || "Okänd",
+                        printers.printers[target].firmwareVersion || "Unknown",
                       ],
                       [
-                        "AMS-enheter",
+                        "AMS units",
                         Array.isArray(printers.printers[target].ams)
                           ? String(printers.printers[target].ams.length)
-                          : "Okänt",
+                          : "Unknown",
                       ],
                     ]),
                   ),
@@ -214,10 +217,7 @@ export function registerPrinterSkill(
         return;
       }
       if (args.length > 1) {
-        await reply(
-          message,
-          "Ange ett skrivarnamn, ett gruppnamn eller `all`.",
-        );
+        await reply(message, "Enter a printer ID, group ID, or `all`.");
         return;
       }
       const target = (args[0] || "all").toLowerCase();
@@ -226,8 +226,8 @@ export function registerPrinterSkill(
         await reply(
           message,
           target === "all"
-            ? "Inga aktiva skrivare är konfigurerade."
-            : `Ingen skrivare eller grupp med namnet ${safeText(target)} hittades.`,
+            ? "No enabled printers are configured."
+            : `No printer or group named ${safeText(target)} was found.`,
         );
         return;
       }
@@ -239,7 +239,7 @@ export function registerPrinterSkill(
             return {
               text: codeBox(
                 displayName,
-                "AMS stöds endast via Bambu-anslutningen.",
+                "AMS is supported only through a Bambu connection.",
               ),
             };
           const status = await service.fetchStatus(printer, command === "ams");

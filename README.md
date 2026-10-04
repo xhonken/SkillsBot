@@ -8,11 +8,11 @@ A modular Discord bot. Install the **main bot** first, then choose the **skills*
 | 3D printer skill | Printer status/progress, remaining time, errors, groups, and multi-unit Bambu AMS information. | [Printer setup](howto/PRINTERS.md)               |
 | AI skill         | Questions to a local compatible AI server, OpenAI, or Claude using your own configuration.     | [AI setup](howto/AI.md)                          |
 
-The main bot works without printers or AI. Replies use labelled code blocks and tables. Bot replies and printer-wizard prompts are currently Swedish; documentation is English.
+The main bot works without printers or AI. Replies use labelled code blocks and tables. Built-in Discord replies, terminal prompts, and documentation use English.
 
 ## Installation
 
-For a first installation, follow [Install and Configure the Main Bot](docs/GETTING_STARTED.md). It walks through software installation, creating/inviting the Discord bot, obtaining IDs and a token, setup, and verification. Use Node.js 24 LTS and Git; Node.js 20.19+ is the project minimum.
+For a first installation, follow the [complete step-by-step installation guide](docs/GETTING_STARTED.md). It takes you from downloading the project to entering your Discord token, verifying the main bot, adding a printer, and optionally connecting AI. The main bot and optional skills have separate numbered sections. Use Node.js 24 LTS; Node.js 20.19+ is the project minimum. Download a ZIP, or use Git to clone the repository.
 
 Once you have prepared Discord, the terminal commands are:
 

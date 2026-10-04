@@ -62,6 +62,6 @@ export function secret(printer, key, env = process.env) {
   const variable = printer[`${key}Env`];
   const value = variable ? env[variable] : printer[key];
   if (variable && !value)
-    throw new StatusError(`Miljövariabeln ${variable} saknas.`);
+    throw new StatusError(`Environment variable ${variable} is missing.`);
   return value;
 }

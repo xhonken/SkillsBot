@@ -8,7 +8,7 @@ try {
   const updates = [];
   for (const [id, printer] of Object.entries(config.printers)) {
     if (printer.protocol !== "bambu" || printer.enabled === false) continue;
-    console.log(`Hämtar namn, modell, firmware och AMS för ${id}…`);
+    console.log(`Fetching name, model, firmware, and AMS for ${id}…`);
     const result = await inspectBambu(printer, { env });
     updates.push({ id, printer: result.printer, previous: printer });
   }
@@ -16,17 +16,17 @@ try {
     await savePrinters(updates);
     for (const { id, printer } of updates)
       console.log(
-        `${id}: ${printer.displayName}, ${printer.ams.length} AMS-enhet(er).`,
+        `${id}: ${printer.displayName}, ${printer.ams.length} AMS unit(s).`,
       );
     console.log(
-      "Uppdaterat. Grupper och skrivar-ID:n är kvar; buffertar och fläktar sparas inte. Ingen omstart behövs.",
+      "Updated. Groups and printer IDs are preserved; buffers and fans are not stored. No restart is needed.",
     );
-  } else console.log("Inga aktiva Bambu-skrivare att uppdatera.");
+  } else console.log("No enabled Bambu printers to update.");
 } catch (error) {
   console.error(
     error instanceof StatusError
       ? error.message
-      : "Skrivarkonfigurationen kunde inte uppdateras. Kontrollera filerna med npm run check.",
+      : "Printer configuration could not be updated. Check the files with npm run check.",
   );
   process.exitCode = 1;
 }

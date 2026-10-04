@@ -4,7 +4,9 @@ import { StatusError, secret } from "./status.js";
 // PrusaLink installations may use Digest authentication instead of an API key.
 export function digestAuthorization(challenge, url, username, password) {
   if (!challenge?.startsWith("Digest "))
-    throw new StatusError("Skrivaren kräver en autentisering som inte stöds.");
+    throw new StatusError(
+      "The printer requires an unsupported authentication method.",
+    );
   const fields = Object.fromEntries(
     [...challenge.slice(7).matchAll(/(\w+)=(?:"([^"]*)"|([^,\s]+))/g)].map(
       (m) => [m[1], m[2] ?? m[3]],
@@ -21,7 +23,9 @@ export function digestAuthorization(challenge, url, username, password) {
         .map((v) => v.trim())
         .includes("auth"))
   )
-    throw new StatusError("Skrivarens Digest-autentisering stöds inte.");
+    throw new StatusError(
+      "The printer Digest authentication is not supported.",
+    );
   const hash = (text) =>
     createHash(algorithm === "MD5" ? "md5" : "sha256")
       .update(text)
@@ -69,7 +73,8 @@ export async function getJson(
       printer.username
     ) {
       const password = secret(printer, "password", env);
-      if (!password) throw new StatusError("Lösenord för PrusaLink saknas.");
+      if (!password)
+        throw new StatusError("The PrusaLink password is missing.");
       headers.Authorization = digestAuthorization(
         response.headers.get("www-authenticate"),
         url,
@@ -83,9 +88,9 @@ export async function getJson(
       await response.body?.cancel();
       if ([401, 403].includes(response.status))
         throw new StatusError(
-          `Åtkomst nekad (HTTP ${response.status}); kontrollera API-nyckel eller lösenord.`,
+          `Access denied (HTTP ${response.status}); check the API key or password.`,
         );
-      throw new StatusError(`Status-API svarade HTTP ${response.status}.`);
+      throw new StatusError(`The status API returned HTTP ${response.status}.`);
     }
     // Bound response size and keep the timeout active while reading the body.
     const reader = response.body.getReader();
@@ -97,7 +102,7 @@ export async function getJson(
       bytes += part.value.length;
       if (bytes > 1024 * 1024) {
         await reader.cancel();
-        throw new StatusError("Statussvaret är för stort.");
+        throw new StatusError("The status response is too large.");
       }
       parts.push(Buffer.from(part.value));
     }
@@ -105,17 +110,16 @@ export async function getJson(
     try {
       value = JSON.parse(Buffer.concat(parts).toString("utf8"));
     } catch {
-      throw new StatusError("Status-API returnerade ogiltig JSON.");
+      throw new StatusError("The status API returned invalid JSON.");
     }
     if (!value || typeof value !== "object" || Array.isArray(value))
-      throw new StatusError("Status-API returnerade ett ogiltigt svar.");
+      throw new StatusError("The status API returned an invalid response.");
     return value;
   } catch (error) {
     if (error instanceof StatusError) throw error;
-    if (signal.aborted)
-      throw new StatusError("Skrivaren svarade inte inom tidsgränsen.");
+    if (signal.aborted) throw new StatusError("The printer request timed out.");
     throw new StatusError(
-      "Kunde inte ansluta till skrivarens status-API; kontrollera nätverk och TLS.",
+      "Could not connect to the printer status API; check the network and TLS.",
     );
   }
 }

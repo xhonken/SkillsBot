@@ -104,7 +104,7 @@ test("HTTP failures are explicit and do not disclose response bodies", async (t)
       getJson({ url }, `/${code}`),
       (error) =>
         error.message.includes(String(code)) &&
-        !error.message.includes("password"),
+        !error.message.includes("password-and-private-server-details"),
     );
   }
 });
@@ -119,9 +119,9 @@ test("invalid JSON, redirects and oversized HTTP responses are rejected", async 
       res.end(JSON.stringify({ content: "x".repeat(1024 * 1024 + 1) }));
     else res.end("private-invalid-content");
   });
-  await assert.rejects(getJson({ url }, "/invalid"), /ogiltig JSON/);
-  await assert.rejects(getJson({ url }, "/large"), /för stort/);
-  await assert.rejects(getJson({ url }, "/redirect"), /Kunde inte ansluta/);
+  await assert.rejects(getJson({ url }, "/invalid"), /invalid JSON/);
+  await assert.rejects(getJson({ url }, "/large"), /too large/);
+  await assert.rejects(getJson({ url }, "/redirect"), /Could not connect/);
 });
 
 test("HTTP timeout applies while reading a stalled response body", async (t) => {
@@ -131,7 +131,7 @@ test("HTTP timeout applies while reading a stalled response body", async (t) => 
   });
   await assert.rejects(
     getJson({ url, timeoutMs: 100 }, "/status"),
-    /tidsgränsen/,
+    /timed out/,
   );
 });
 
@@ -296,7 +296,7 @@ test("MQTT timeout closes the connection without claiming idle", async () => {
   const { connect, client } = fakeMQTT([]);
   await assert.rejects(
     fetchBambu({ ...bambu, timeoutMs: 100 }, { connect, env }),
-    /tidsgränsen/,
+    /timed out/,
   );
   assert.equal(client.ends, 1);
 });
@@ -317,13 +317,13 @@ test("a real partial state can be returned at timeout with missing telemetry unk
 
 test("MQTT subscribe denial, malformed reports, early close and publish failure terminate cleanly", async () => {
   for (const [messages, options, pattern] of [
-    [[], { denied: true }, /nekade prenumerationen/],
-    [[{ payload: "invalid-json" }], {}, /ogiltig JSON/],
-    [[], { close: true }, /stängdes/],
+    [[], { denied: true }, /denied the status subscription/],
+    [[{ payload: "invalid-json" }], {}, /invalid JSON/],
+    [[], { close: true }, /closed/],
     [
       [],
       { publishError: new Error("private-credentials") },
-      /kunde inte begära/,
+      /could not request/,
     ],
   ]) {
     const { connect, client } = fakeMQTT(messages, options);
@@ -453,7 +453,7 @@ test("setup rejects missing version info and serial mismatches instead of saving
   for (const [messages, pattern] of [
     [
       [{ payload: { print: { gcode_state: "IDLE" } } }],
-      /modell och AMS-information/,
+      /model and AMS information/,
     ],
     [
       [
@@ -466,11 +466,11 @@ test("setup rejects missing version info and serial mismatches instead of saving
           },
         },
       ],
-      /serienummer/,
+      /serial number/,
     ],
     [
       [{ payload: { info: { command: "get_version", module: [] } } }],
-      /tom modellinformation/,
+      /valid model information/,
     ],
   ]) {
     const { connect, client } = fakeMQTT(messages);

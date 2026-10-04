@@ -1,6 +1,6 @@
 # Contributing
 
-Use Node.js 24 LTS and ES modules. Follow existing two-space indentation, camelCase functions, and Prettier formatting. Skill filenames are lowercase module IDs with unique command prefixes. Read [Writing skills](docs/SKILLS.md) before adding one.
+Use Node.js 24 LTS and ES modules. Follow existing two-space indentation, camelCase functions, and Prettier formatting. Keep documentation, built-in bot replies, terminal prompts, help text, and default AI instructions in English. Preserve user-provided text and printer-reported diagnostics as supplied. Skill filenames are lowercase module IDs with unique command prefixes. Read [Writing skills](docs/SKILLS.md) before adding one.
 
 Prepare a checkout without personal configuration:
 

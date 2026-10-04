@@ -47,12 +47,12 @@ function trayPresent(ams, unitId, trayId) {
 export function parseBambu(data) {
   const print = data.print;
   if (!print || typeof print.gcode_state !== "string")
-    throw new StatusError("Bambu-rapporten saknar utskriftsstatus.");
+    throw new StatusError("The Bambu report is missing print status.");
   const errors = [];
   const code = errorCode(print.print_error);
   if (code)
     errors.push(
-      `Bambu felkod ${code} (https://wiki.bambulab.com/en/x1/troubleshooting/hmscode)`,
+      `Bambu error code ${code} (https://wiki.bambulab.com/en/x1/troubleshooting/hmscode)`,
     );
   for (const item of Array.isArray(print.hms) ? print.hms : []) {
     const attr = errorCode(item.attr) ?? "00000000";
@@ -87,7 +87,7 @@ export function parseBambu(data) {
     error:
       errors.join("; ") ||
       (printerState === "error"
-        ? "Bambu rapporterar ett fel utan felkod."
+        ? "Bambu reports an error without an error code."
         : null),
     ams,
   });
@@ -104,15 +104,15 @@ function infoText(value, max = 80) {
 
 export function parseBambuInfo(info, deviceId) {
   if (info?.command !== "get_version" || !Array.isArray(info.module))
-    throw new StatusError("Bambu svarade inte med giltig modellinformation.");
+    throw new StatusError("Bambu did not return valid model information.");
   const modules = info.module.filter(
     (item) => item && typeof item === "object" && !Array.isArray(item),
   );
   if (!modules.length)
-    throw new StatusError("Bambu svarade med tom modellinformation.");
+    throw new StatusError("Bambu did not return valid model information.");
   const printer = modules.find((item) => item.name === "ota");
   if (printer?.sn && printer.sn !== deviceId)
-    throw new StatusError("Skrivarens rapporterade serienummer stämmer inte.");
+    throw new StatusError("The reported printer serial number does not match.");
   const ams = modules
     .filter(
       (item) =>
@@ -179,7 +179,7 @@ export async function fetchBambu(
 ) {
   const password = secret(printer, "password", env);
   if (!password)
-    throw new StatusError("Bambu LAN-kod eller MQTT-lösenord saknas.");
+    throw new StatusError("Bambu LAN access code or MQTT password is missing.");
   const timeoutMs = printer.timeoutMs ?? 10000;
   const tls = { rejectUnauthorized: printer.tls?.rejectUnauthorized ?? true };
   if (printer.tls?.servername) tls.servername = printer.tls.servername;
@@ -214,11 +214,14 @@ export async function fetchBambu(
       if (wantInfo && !info)
         finish(
           new StatusError(
-            "Bambu svarade inte med modell och AMS-information inom tidsgränsen.",
+            "Bambu timed out while returning model and AMS information.",
           ),
         );
       else if (report.print?.gcode_state) finish();
-      else finish(new StatusError("Bambu MQTT svarade inte inom tidsgränsen."));
+      else
+        finish(
+          new StatusError("Bambu MQTT timed out while waiting for a response."),
+        );
     }, timeoutMs);
     try {
       client = connectImpl(`mqtts://${printer.host}:${printer.port ?? 8883}`, {
@@ -235,7 +238,7 @@ export async function fetchBambu(
           if (done) return;
           if (error || grants?.some((grant) => grant.qos === 128)) {
             finish(
-              new StatusError("Bambu MQTT nekade prenumerationen på status."),
+              new StatusError("Bambu MQTT denied the status subscription."),
             );
             return;
           }
@@ -253,7 +256,7 @@ export async function fetchBambu(
             JSON.stringify(request),
             (error) => {
               if (error)
-                finish(new StatusError("Bambu MQTT kunde inte begära status."));
+                finish(new StatusError("Bambu MQTT could not request status."));
             },
           );
           if (wantInfo && !done)
@@ -266,7 +269,7 @@ export async function fetchBambu(
                 if (error)
                   finish(
                     new StatusError(
-                      "Bambu MQTT kunde inte begära modellinformation.",
+                      "Bambu MQTT could not request model information.",
                     ),
                   );
               },
@@ -276,14 +279,14 @@ export async function fetchBambu(
       client.on("message", (receivedTopic, payload, packet) => {
         if (done || receivedTopic !== topic || packet?.retain) return;
         if (payload.length > 1024 * 1024) {
-          finish(new StatusError("Bambu-statussvaret är för stort."));
+          finish(new StatusError("The Bambu status response is too large."));
           return;
         }
         let update;
         try {
           update = JSON.parse(payload.toString());
         } catch {
-          finish(new StatusError("Bambu skickade ogiltig JSON."));
+          finish(new StatusError("Bambu returned invalid JSON."));
           return;
         }
         if (wantInfo && update?.info?.command === "get_version") {
@@ -323,8 +326,8 @@ export async function fetchBambu(
         finish(
           new StatusError(
             tlsError
-              ? "Bambu TLS-certifikatet kunde inte verifieras; konfigurera tls.caFile."
-              : "Kunde inte ansluta till Bambu MQTT; kontrollera nätverk och LAN-kod.",
+              ? "The Bambu TLS certificate could not be verified; configure tls.caFile."
+              : "Could not connect to Bambu MQTT; check the network and LAN access code.",
           ),
         );
       });
@@ -332,12 +335,12 @@ export async function fetchBambu(
         if (!done)
           finish(
             new StatusError(
-              "Bambu MQTT-anslutningen stängdes innan status kunde hämtas.",
+              "The Bambu MQTT connection closed before status could be received.",
             ),
           );
       });
     } catch {
-      finish(new StatusError("Kunde inte starta Bambu MQTT-anslutningen."));
+      finish(new StatusError("Could not start the Bambu MQTT connection."));
     }
   });
 }

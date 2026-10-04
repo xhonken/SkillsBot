@@ -56,7 +56,7 @@ export function createPrinterService({
     } catch {
       return status({
         state: "unavailable",
-        error: "Skrivarens inloggningsuppgifter kunde inte läsas från .env.",
+        error: "Printer credentials could not be read from .env.",
       });
     }
     const credentials = createHash("sha256")
@@ -79,7 +79,9 @@ export function createPrinterService({
       try {
         const adapter = adapters[printer.protocol];
         if (!adapter)
-          throw new StatusError("Skrivarens anslutningsprotokoll stöds inte.");
+          throw new StatusError(
+            "The printer connection protocol is not supported.",
+          );
         value = await adapter(printer, { env: runtimeEnv, wantAMS });
       } catch (error) {
         value = status({
@@ -87,7 +89,7 @@ export function createPrinterService({
           error:
             error instanceof StatusError
               ? error.message
-              : "Status kunde inte hämtas; kontrollera skrivarens konfiguration.",
+              : "Status could not be fetched; check the printer configuration.",
         });
       }
       if (value.error) {
